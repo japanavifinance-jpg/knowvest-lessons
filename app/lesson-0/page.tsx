@@ -7,12 +7,12 @@ const T = {
   purple:"#A78BFA", blue:"#60A5FA", slate:"#8DA0B3", white:"#F0F4F8", offWhite:"#C8D6E2",
 };
 
-const fmt = (n) => {
+const fmt = (n: number) => {
   if (n >= 1000000) return `¥${(n/1000000).toFixed(1)}M`;
   if (n >= 1000)    return `¥${(n/1000).toFixed(0)}k`;
   return `¥${Math.round(n).toLocaleString()}`;
 };
-const fmtFull = (n) => `¥${Math.round(n).toLocaleString()}`;
+const fmtFull = (n: number) => `¥${Math.round(n).toLocaleString()}`;
 
 // ── WB: Curious ───────────────────────────────────────────────
 function WB_Curious({ play }) {
