@@ -1,15 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export", // Forces Next.js to build pure, standalone HTML/JS files
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    // Same thing for code style checks
-    ignoreDuringBuilds: true,
   },
 };
 
