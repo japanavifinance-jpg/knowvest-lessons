@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-//import { useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
