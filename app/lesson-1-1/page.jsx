@@ -1,610 +1,829 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const T = {
-  teal:     "#1D9E75",
-  amber:    "#F5A623",
-  red:      "#E8404A",
-  purple:   "#A78BFA",
-  navy:     "#0D1B2A",
-  navyCard: "#1C2D3F",
-  navyDeep: "#0A1520",
-  slate:    "#8DA0B3",
-  offwhite: "#C8D6E2",
-  white:    "#F0F4F8",
+  navy:"#0D1B2A", navyMid:"#152130", navyCard:"#1C2D3F", navyDeep:"#0A1520",
+  teal:"#1D9E75", tealDim:"#0f5c43", amber:"#F5A623", red:"#E8404A",
+  purple:"#A78BFA", blue:"#60A5FA", slate:"#8DA0B3", white:"#F0F4F8", offWhite:"#C8D6E2",
+  oxygen:"#38BDF8", colony:"#1D9E75",
 };
 
-// ── SHARED PRIMITIVES ──────────────────────────────────────
+const fmt = (n) => {
+  if (n >= 1000000) return `¥${(n/1000000).toFixed(1)}M`;
+  if (n >= 1000)    return `¥${(n/1000).toFixed(0)}k`;
+  return `¥${Math.round(n).toLocaleString()}`;
+};
+const fmtFull = (n) => `¥${Math.round(n).toLocaleString()}`;
 
-function Dots({ total, current }) {
-  return (
-    <div style={{ display: "flex", gap: "5px", justifyContent: "center", padding: "12px 0 16px" }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            width: "7px", height: "7px", borderRadius: "50%",
-            background: i < current ? T.teal : i === current ? T.white : T.navyCard,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+// ── Space Station Whiteboard ──────────────────────────────────
+function WB_SpaceStation({ play }) {
+  // Left side: colony bricks stacking up (growth engine)
+  // Right side: oxygen tank filling (liquidity)
+  // Center: hard line separator
+  // Bottom: "forced sell" consequence
 
-function PartLabel({ text }) {
-  return (
-    <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.5px", color: T.slate, textTransform: "uppercase", marginBottom: "6px" }}>
-      {text}
-    </div>
-  );
-}
+  const bricks = [
+    { x:20,  y:118, w:52, h:16, delay:0.3 },
+    { x:20,  y:100, w:52, h:16, delay:0.5 },
+    { x:20,  y:82,  w:52, h:16, delay:0.7 },
+    { x:20,  y:64,  w:52, h:16, delay:0.9 },
+    { x:20,  y:46,  w:52, h:16, delay:1.1 },
+  ];
 
-function PrimaryBtn({ children, onClick, style = {} }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        background: T.teal, color: "#fff", border: "none", borderRadius: "12px",
-        padding: "15px 20px", fontSize: "15px", fontWeight: 700, width: "100%",
-        cursor: "pointer", marginTop: "auto", ...style,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function GhostBtn({ children, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "transparent", color: T.teal, border: "1.5px solid " + T.teal,
-        borderRadius: "12px", padding: "13px 20px", fontSize: "14px", fontWeight: 600,
-        width: "100%", cursor: "pointer", marginTop: "8px",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Tag({ children }) {
-  return (
-    <div style={{
-      display: "inline-block", background: T.teal + "22", color: T.teal,
-      border: "1px solid " + T.teal + "44", borderRadius: "6px",
-      padding: "4px 10px", fontSize: "12px", fontWeight: 600, marginBottom: "16px",
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function Card({ children, style = {} }) {
-  return (
-    <div style={{ background: T.navyCard, borderRadius: "16px", padding: "20px", marginBottom: "16px", ...style }}>
-      {children}
-    </div>
-  );
-}
-
-function MythBox({ children }) {
-  return (
-    <div style={{
-      background: T.red + "15", border: "1px solid " + T.red + "40",
-      borderRadius: "12px", padding: "14px", marginBottom: "12px",
-    }}>
-      <div style={{ fontSize: "11px", fontWeight: 700, color: T.red, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
-        The Myth
+    <div style={{ padding:"8px 0" }}>
+      {/* Title row */}
+      <div style={{ display:"flex", justifyContent:"space-around", marginBottom:10 }}>
+        <div style={{ textAlign:"center" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:T.colony, textTransform:"uppercase", letterSpacing:0.8 }}>
+            🚀 Mars Colony
+          </div>
+          <div style={{ fontSize:10, color:T.slate }}>Growth Engine</div>
+        </div>
+        <div style={{ textAlign:"center" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:T.oxygen, textTransform:"uppercase", letterSpacing:0.8 }}>
+            🛸 Oxygen Tank
+          </div>
+          <div style={{ fontSize:10, color:T.slate }}>Emergency Cash</div>
+        </div>
       </div>
-      <div style={{ fontSize: "14px", color: T.offwhite, lineHeight: 1.5 }}>{children}</div>
-    </div>
-  );
-}
 
-function TruthBox({ children }) {
-  return (
-    <div style={{
-      background: T.teal + "15", border: "1px solid " + T.teal + "40",
-      borderRadius: "12px", padding: "14px", marginBottom: "12px",
-    }}>
-      <div style={{ fontSize: "11px", fontWeight: 700, color: T.teal, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
-        The Reality
-      </div>
-      <div style={{ fontSize: "14px", color: T.offwhite, lineHeight: 1.5 }}>{children}</div>
-    </div>
-  );
-}
+      {/* Main illustration area */}
+      <svg viewBox="0 0 300 155" style={{ width:"100%", overflow:"visible" }}>
 
-function JessicaQuote({ children }) {
-  return (
-    <div style={{
-      borderLeft: "3px solid " + T.teal, paddingLeft: "14px",
-      margin: "16px 0", fontSize: "14px", color: T.offwhite,
-      fontStyle: "italic", lineHeight: 1.6,
-    }}>
-      {children}
-    </div>
-  );
-}
+        {/* ── LEFT: Colony bricks ── */}
+        {/* Ground base */}
+        <rect x="14" y="134" width="66" height="8" rx="2"
+          fill={`${T.colony}40`} stroke={T.colony} strokeWidth="1.5" />
+        {/* Bricks animate in */}
+        {bricks.map((b, i) => (
+          <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx="2"
+            fill={`${T.colony}${i < 3 ? "60" : "35"}`}
+            stroke={T.colony} strokeWidth="1"
+            style={{
+              opacity: 0,
+              animation: play ? `fadeUp 0.4s ease ${b.delay}s forwards` : "none",
+            }} />
+        ))}
+        {/* Brick mortar lines */}
+        {bricks.map((b, i) => (
+          <line key={`m${i}`} x1={b.x+2} y1={b.y+b.h/2} x2={b.x+b.w-2} y2={b.y+b.h/2}
+            stroke={`${T.colony}40`} strokeWidth="0.5"
+            style={{ opacity: 0, animation: play ? `fadeUp 0.4s ease ${b.delay+0.1}s forwards` : "none" }} />
+        ))}
+        {/* Colony label */}
+        <text x="47" y="42" textAnchor="middle" fill={T.colony} fontSize="9" fontWeight="700"
+          style={{ opacity:0, animation: play?"fadeUp 0.4s ease 1.3s forwards":"none" }}>
+          LONG-TERM
+        </text>
+        <text x="47" y="52" textAnchor="middle" fill={T.colony} fontSize="9"
+          style={{ opacity:0, animation: play?"fadeUp 0.4s ease 1.4s forwards":"none" }}>
+          STRUCTURE
+        </text>
 
-function Screen({ children }) {
-  return (
-    <div style={{
-      background: T.navy, minHeight: "100vh", color: T.white,
-      fontFamily: "Inter, system-ui, sans-serif",
-      padding: "20px", maxWidth: "480px", margin: "0 auto",
-      display: "flex", flexDirection: "column",
-    }}>
-      {children}
-    </div>
-  );
-}
+        {/* ── CENTER: Hard dividing line ── */}
+        <line x1="150" y1="20" x2="150" y2="145"
+          stroke={`${T.amber}80`} strokeWidth="1.5" strokeDasharray="4,3"
+          style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.4s forwards":"none" }} />
+        <text x="150" y="16" textAnchor="middle" fill={T.amber} fontSize="8" fontWeight="700"
+          style={{ opacity:0, animation: play?"fadeIn 0.4s ease 0.8s forwards":"none" }}>
+          THE LINE
+        </text>
 
-// ── WHITEBOARD ─────────────────────────────────────────────
-
-function Whiteboard() {
-  const [drawn, setDrawn] = useState(false);
-
-  const revealStyle = (delay) => ({
-    opacity: drawn ? 1 : 0,
-    transition: drawn ? "opacity 0.5s ease " + delay + "s" : "none",
-  });
-
-  return (
-    <div style={{
-      background: T.navyDeep, border: "1px solid " + T.teal + "30",
-      borderRadius: "16px", padding: "20px", marginBottom: "20px",
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <span style={{ fontSize: "13px", color: T.slate, fontWeight: 600, letterSpacing: "0.5px" }}>WHITEBOARD</span>
-        <button
-          onClick={() => setDrawn(false) || setTimeout(() => setDrawn(true), 50)}
+        {/* ── RIGHT: Oxygen tank ── */}
+        {/* Tank body outline */}
+        <rect x="218" y="38" width="52" height="90" rx="8"
+          fill="none" stroke={T.oxygen} strokeWidth="2"
+          style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.3s forwards":"none" }} />
+        {/* Tank cap */}
+        <rect x="232" y="32" width="24" height="8" rx="3"
+          fill="none" stroke={T.oxygen} strokeWidth="1.5"
+          style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.3s forwards":"none" }} />
+        {/* Tank fill — animates up */}
+        <clipPath id="tankClip">
+          <rect x="220" y="40" width="48" height="86" rx="6" />
+        </clipPath>
+        <rect x="220" y="40" width="48" height="86" rx="6"
+          fill={`${T.oxygen}25`}
+          style={{ opacity:0, animation: play?"fadeIn 0.3s ease 0.4s forwards":"none" }} />
+        <rect x="220" y="80" width="48" height="46" rx="0"
+          clipPath="url(#tankClip)"
+          fill={`${T.oxygen}60`}
           style={{
-            background: T.navyCard, color: T.teal, border: "1.5px solid " + T.teal,
-            borderRadius: "10px", padding: "10px 18px", fontSize: "13px",
-            fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-          }}
-        >
-          {drawn ? "↺ Replay" : "▶ Draw it"}
+            opacity:0,
+            animation: play?"tankFill 1.2s ease 0.9s forwards":"none",
+          }} />
+        {/* Gauge lines */}
+        {[0.25, 0.5, 0.75].map((pct, i) => (
+          <line key={i}
+            x1="220" y1={40 + (1-pct)*86}
+            x2="230" y2={40 + (1-pct)*86}
+            stroke={`${T.oxygen}60`} strokeWidth="1"
+            style={{ opacity:0, animation: play?`fadeIn 0.3s ease ${1.2+i*0.1}s forwards`:"none" }} />
+        ))}
+        {/* O2 label */}
+        <text x="244" y="68" textAnchor="middle" fill={T.oxygen} fontSize="14" fontWeight="900"
+          style={{ opacity:0, animation: play?"fadeIn 0.5s ease 1.5s forwards":"none" }}>
+          O₂
+        </text>
+        <text x="244" y="80" textAnchor="middle" fill={T.oxygen} fontSize="8"
+          style={{ opacity:0, animation: play?"fadeIn 0.4s ease 1.6s forwards":"none" }}>
+          3–6 mo
+        </text>
+        <text x="244" y="90" textAnchor="middle" fill={T.oxygen} fontSize="8"
+          style={{ opacity:0, animation: play?"fadeIn 0.4s ease 1.7s forwards":"none" }}>
+          expenses
+        </text>
+
+        {/* ── BOTTOM: Forced sell consequence ── */}
+        <g style={{ opacity:0, animation: play?"fadeIn 0.6s ease 2.0s forwards":"none" }}>
+          {/* Arrow from brick down */}
+          <path d="M47,44 L47,148" stroke={T.red} strokeWidth="1.5" strokeDasharray="3,2" fill="none" />
+          <polygon points="44,148 47,154 50,148" fill={T.red} />
+          <rect x="4" y="154" width="292" height="18" rx="4" fill={`${T.red}20`} stroke={`${T.red}50`} strokeWidth="1" />
+          <text x="150" y="166" textAnchor="middle" fill={T.red} fontSize="9" fontWeight="700">
+            ⚠ Forced sell = Paper loss becomes PERMANENT loss
+          </text>
+        </g>
+
+        <style>{`
+          @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+          @keyframes fadeUp  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+          @keyframes tankFill { from { transform:scaleY(0); transform-origin:bottom; opacity:0; } to { transform:scaleY(1); transform-origin:bottom; opacity:1; } }
+        `}</style>
+      </svg>
+    </div>
+  );
+}
+
+// ── Consequence Whiteboard ────────────────────────────────────
+function WB_ForcedSell({ play, monthsCovered }) {
+  const hasCushion = monthsCovered >= 3;
+  return (
+    <div style={{ padding:"8px 0" }}>
+      <div style={{ fontSize:11, color:T.slate, marginBottom:12, textTransform:"uppercase", letterSpacing:0.8 }}>
+        Same market dip — two different outcomes
+      </div>
+      <div style={{ display:"flex", gap:10 }}>
+        {/* Scenario A — No cushion */}
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:T.red, marginBottom:6, textAlign:"center" }}>
+            ❌ No Oxygen Tank
+          </div>
+          {[
+            { text:"Market dips 15%", color:T.slate, delay:0.3 },
+            { text:"Emergency hits", color:T.amber, delay:0.6 },
+            { text:"Forced to sell", color:T.red, delay:0.9 },
+            { text:"Loss = permanent", color:T.red, delay:1.2 },
+          ].map((s, i) => (
+            <div key={i} style={{
+              padding:"6px 8px", borderRadius:6, marginBottom:4,
+              background:`${s.color}18`, border:`1px solid ${s.color}40`,
+              fontSize:11, color:s.color, fontWeight:600, textAlign:"center",
+              opacity:play?1:0,
+              transition:play?`opacity 0.4s ease ${s.delay}s`:"none",
+            }}>
+              {s.text}
+            </div>
+          ))}
+        </div>
+
+        {/* VS */}
+        <div style={{ display:"flex", alignItems:"center", fontSize:11, color:T.slate, fontWeight:700 }}>VS</div>
+
+        {/* Scenario B — With cushion */}
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:T.teal, marginBottom:6, textAlign:"center" }}>
+            ✅ Full Oxygen Tank
+          </div>
+          {[
+            { text:"Market dips 15%", color:T.slate, delay:0.4 },
+            { text:"Emergency hits", color:T.amber, delay:0.7 },
+            { text:"Use HYSA cash", color:T.teal, delay:1.0 },
+            { text:"Investments untouched", color:T.teal, delay:1.3 },
+          ].map((s, i) => (
+            <div key={i} style={{
+              padding:"6px 8px", borderRadius:6, marginBottom:4,
+              background:`${s.color}18`, border:`1px solid ${s.color}40`,
+              fontSize:11, color:s.color, fontWeight:600, textAlign:"center",
+              opacity:play?1:0,
+              transition:play?`opacity 0.4s ease ${s.delay}s`:"none",
+            }}>
+              {s.text}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        marginTop:12, padding:"10px 12px", background:T.navyDeep, borderRadius:8,
+        fontSize:12, color:T.offWhite, lineHeight:1.5,
+        opacity:play?1:0, transition:play?"opacity 0.5s ease 1.8s":"none",
+      }}>
+        The market dip was identical. The outcome was decided{" "}
+        <span style={{ color:T.amber, fontWeight:700 }}>before the dip even happened.</span>
+      </div>
+    </div>
+  );
+}
+
+// ── WB Panel ──────────────────────────────────────────────────
+function WBPanel({ title, color, children }) {
+  const [play, setPlay] = useState(false);
+  const [played, setPlayed] = useState(false);
+  const toggle = () => {
+    setPlay(false);
+    setTimeout(() => { setPlay(true); setPlayed(true); }, 60);
+  };
+  return (
+    <div style={{ background:T.navyDeep, border:`1px solid ${color}35`, borderRadius:14, padding:"14px 16px", marginBottom:16 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+        <div style={{ fontSize:11, fontWeight:700, color, textTransform:"uppercase", letterSpacing:1 }}>
+          📋 {title}
+        </div>
+        <button onClick={toggle} style={{
+          background:`${color}20`, border:`1px solid ${color}50`,
+          borderRadius:20, padding:"4px 14px",
+          color, fontSize:11, fontWeight:700, cursor:"pointer",
+        }}>
+          {!played ? "▶ Draw it" : "↺ Replay"}
         </button>
       </div>
+      {typeof children === "function" ? children(play) : children}
+    </div>
+  );
+}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+// ── Main Lesson 1-2 ───────────────────────────────────────────
+export default function Lesson12() {
+  // parts: 0=hook, 1=analogy, 2=rule, 3=calculator, 4=verdict
+  const [part, setPart]           = useState(0);
+  const [expenses, setExpenses]   = useState(200000);
+  const [currentCash, setCurrentCash] = useState(600000);
+  const [monthsTarget, setMonthsTarget] = useState(3);
+  const topRef = useRef(null);
 
-        {/* Row 1 — Apple whole share */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{
-            width: "72px", height: "72px", borderRadius: "50%",
-            background: T.amber + "20", border: "2px solid " + T.amber, flexShrink: 0,
-          }} />
+  const oxygenTarget   = expenses * monthsTarget;
+  const deployable     = Math.max(0, currentCash - oxygenTarget);
+  const cushionMonths  = currentCash / Math.max(expenses, 1);
+  const oxygenFull     = cushionMonths >= monthsTarget;
+  const oxygenPct      = Math.min(100, (currentCash / Math.max(oxygenTarget, 1)) * 100);
+  const shortfall      = Math.max(0, oxygenTarget - currentCash);
+
+  useEffect(() => { topRef.current?.scrollIntoView({ behavior:"smooth" }); }, [part]);
+
+  const LABELS = ["The Fear","The Analogy","The Rule","Your Numbers","Your Verdict"];
+
+  return (
+    <div ref={topRef} style={{
+      minHeight:"100vh", background:T.navy,
+      fontFamily:"'Inter', system-ui, sans-serif",
+      color:T.white, padding:"0 16px 80px",
+      display:"flex", flexDirection:"column", alignItems:"center",
+    }}>
+      <div style={{ width:"100%", maxWidth:480 }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 0 14px" }}>
           <div>
-            <div style={{ fontSize: "13px", color: T.offwhite }}>Apple Inc. · 1 share</div>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: T.amber }}>¥28,000</div>
-            <div style={{ fontSize: "11px", color: T.slate, marginTop: "2px" }}>Too expensive? Keep watching.</div>
+            <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>
+              Level 1 · Lesson 1-2
+            </div>
+            <div style={{ fontSize:17, fontWeight:800 }}>{LABELS[part]}</div>
+          </div>
+          <div style={{ display:"flex", gap:5 }}>
+            {LABELS.map((_,i) => (
+              <div key={i} style={{
+                height:4, width:i===part?22:8, borderRadius:2,
+                background:i<part?T.teal:i===part?T.oxygen:T.navyCard,
+                transition:"all 0.4s",
+              }} />
+            ))}
           </div>
         </div>
 
-        {/* Slices grid */}
-        <div style={{ ...revealStyle(0.4), display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: "4px" }}>
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} style={{
-              aspectRatio: "1", borderRadius: "4px",
-              border: "1.5px solid " + T.amber, background: T.amber + "10",
-            }} />
-          ))}
-          <div style={{
-            aspectRatio: "1", borderRadius: "4px",
-            border: "1.5px solid " + T.teal, background: T.teal + "40",
-          }} />
-        </div>
-
-        {/* Label */}
-        <div style={{ ...revealStyle(0.8), textAlign: "center", fontSize: "12px", color: T.teal, fontWeight: 600 }}>
-          ▲ Your ¥500 = 1/56th of a share. Still real ownership.
-        </div>
-
-        <hr style={{ border: "none", borderTop: "1px solid " + T.navyCard, margin: "2px 0" }} />
-
-        {/* ETF row */}
-        <div style={{ ...revealStyle(1.0), display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "40px", height: "40px", borderRadius: "50%", background: T.teal,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "10px", fontWeight: 700, color: "#fff", flexShrink: 0,
-          }}>
-            ETF
-          </div>
+        {/* Lesson badge */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:10,
+          background:T.navyCard, borderRadius:12, padding:"10px 14px",
+          marginBottom:14, border:`1px solid ${T.navyMid}`,
+        }}>
+          <span style={{ fontSize:22 }}>🛸</span>
           <div>
-            <div style={{ fontSize: "13px", color: T.offwhite }}>eMAXIS Slim S&P 500</div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: T.amber }}>¥100 / unit</div>
-            <div style={{ fontSize: "11px", color: T.slate }}>500 companies. One slice. Yours.</div>
-          </div>
-        </div>
-
-        {/* Reframe */}
-        <div style={{
-          ...revealStyle(1.2),
-          background: T.teal + "15", border: "1px solid " + T.teal + "40",
-          borderRadius: "12px", padding: "12px 14px",
-        }}>
-          <div style={{ fontSize: "13px", fontWeight: 600, color: T.white, marginBottom: "2px" }}>
-            "The myth isn't the price.
-          </div>
-          <div style={{ fontSize: "13px", color: T.offwhite }}>
-            It's that you think you need the whole pie."
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── CALCULATOR ─────────────────────────────────────────────
-
-const FUNDS = [
-  { name: "eMAXIS Slim S&P 500",    sub: "500 US companies · Rakuten/SBI",       price: 100 },
-  { name: "eMAXIS Slim All Country", sub: "Global diversification · NISA eligible", price: 100 },
-  { name: "Apple Inc. (fractional)", sub: "Single stock · via SBI Securities",    price: 28000 },
-  { name: "Rakuten VT",             sub: "Total World Market · ¥100 minimum",     price: 100 },
-];
-
-function fmtYen(n) {
-  if (n >= 1000000) return "¥" + (n / 1000000).toFixed(1) + "M";
-  if (n >= 10000)   return "¥" + Math.round(n / 1000) + "k";
-  return "¥" + Math.round(n).toLocaleString();
-}
-
-function calcDCA(mo, yr) {
-  const r = 0.07 / 12;
-  const n = yr * 12;
-  const future   = mo * ((Math.pow(1 + r, n) - 1) / r);
-  const invested = mo * n;
-  return { future: Math.round(future), invested: Math.round(invested), gains: Math.round(future - invested) };
-}
-
-function TabToday({ amt }) {
-  return (
-    <div>
-      {FUNDS.map((f) => {
-        const units = amt / f.price;
-        const label = units >= 1 ? units.toFixed(2) + " units" : units.toFixed(4) + " units";
-        return (
-          <div key={f.name} style={{
-            background: T.navyCard, borderRadius: "12px", padding: "13px 15px",
-            marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <div>
-              <div style={{ fontSize: "14px", color: T.white, fontWeight: 600 }}>{f.name}</div>
-              <div style={{ fontSize: "12px", color: T.slate, marginTop: "2px" }}>{f.sub}</div>
+            <div style={{ fontSize:11, color:T.oxygen, fontWeight:700, textTransform:"uppercase", letterSpacing:1 }}>
+              The Liquidity Line
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "15px", fontWeight: 700, color: T.teal }}>{label}</div>
-              <div style={{ fontSize: "12px", color: T.slate, marginTop: "2px" }}>@ {fmtYen(f.price)}/unit</div>
-            </div>
+            <div style={{ fontSize:12, color:T.slate }}>Separating your Oxygen Tank from your Growth Engine</div>
           </div>
-        );
-      })}
-      <JessicaQuote>
-        Every yen buys a proportional slice. The companies don't care how much you invested — the returns are the same percentage.
-      </JessicaQuote>
-    </div>
-  );
-}
-
-function TabDCA({ mo, yr }) {
-  const { future, invested, gains } = calcDCA(mo, yr);
-  const multiplier = (future / invested).toFixed(1);
-
-  const milestones = [1, Math.round(yr / 3), Math.round((2 * yr) / 3), yr]
-    .filter((v, i, a) => a.indexOf(v) === i && v >= 1);
-
-  return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "16px" }}>
-        {[
-          { label: "Total invested",   val: fmtYen(invested), sub: yr + " yrs · " + fmtYen(mo) + "/mo",  col: T.white },
-          { label: "Projected value",  val: fmtYen(future),   sub: "at 7% avg return",                    col: T.teal  },
-          { label: "Market gains",     val: "+" + fmtYen(gains), sub: "money made for free",              col: T.teal  },
-          { label: "Multiplier",       val: multiplier + "x", sub: "every yen invested",                  col: T.amber },
-        ].map((s) => (
-          <div key={s.label} style={{ background: T.navyCard, borderRadius: "12px", padding: "13px" }}>
-            <div style={{ fontSize: "11px", color: T.slate, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>{s.label}</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: s.col }}>{s.val}</div>
-            <div style={{ fontSize: "11px", color: T.slate, marginTop: "2px" }}>{s.sub}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: "12px" }}>
-        <div style={{ fontSize: "12px", color: T.slate, marginBottom: "8px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-          Growth over time (7% avg/yr)
         </div>
-        {milestones.map((y) => {
-          const { future: fv } = calcDCA(mo, y);
-          const { future: maxFv } = calcDCA(mo, yr);
-          const pct = Math.round((fv / maxFv) * 100);
-          return (
-            <div key={y}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: T.slate, marginBottom: "4px" }}>
-                <span>Year {y}</span>
-                <span style={{ fontWeight: 700, color: T.white }}>{fmtYen(fv)}</span>
+
+        {/* ═══ PART 0: THE FEAR ═══ */}
+        {part === 0 && (
+          <Fade>
+            <Card borderColor={T.red}>
+              <Pill color={T.red}>The Block We're Solving</Pill>
+              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:10 }}>
+                "What if I invest today and need the money next month?"
               </div>
-              <div style={{ background: T.navyDeep, borderRadius: "8px", height: "10px", marginBottom: "10px", overflow: "hidden" }}>
-                <div style={{ height: "100%", borderRadius: "8px", width: pct + "%", background: T.teal, transition: "width 0.6s ease" }} />
+
+              <div style={{ background:T.navy, borderRadius:12, padding:"14px 16px", marginBottom:16, borderLeft:`3px solid ${T.red}` }}>
+                <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.75 }}>
+                  You've cleared Level 0. Your debt is clean, your baseline cash is real.
+                  <br /><br />
+                  But right now, there's one fear keeping your finger off the buy button:
+                  <br /><br />
+                  <span style={{ fontSize:16, fontWeight:800, color:T.red }}>
+                    "What if I get trapped?"
+                  </span>
+                  <br /><br />
+                  Car breaks down. Dentist bill. Job shock. If your money is locked in the market during a dip —
+                  are you going to be forced to sell at a loss just to survive?
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
 
-      <JessicaQuote>
-        7% is the historical average real return of the S&P 500. Not a guarantee — but 100 years of data says it's a reasonable expectation.
-      </JessicaQuote>
+              <div style={{ background:`${T.teal}15`, border:`1px solid ${T.teal}40`, borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:T.teal, marginBottom:6 }}>
+                  Jessica's answer:
+                </div>
+                <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7 }}>
+                  You don't guess. You draw a hard, mathematical line between two completely separate buckets of money — and you never, ever mix them up.
+                </div>
+              </div>
+
+              <Btn color={T.oxygen} onClick={() => setPart(1)}>Show me the line →</Btn>
+            </Card>
+          </Fade>
+        )}
+
+        {/* ═══ PART 1: THE ANALOGY ═══ */}
+        {part === 1 && (
+          <Fade>
+            <Card borderColor={T.oxygen}>
+              <Pill color={T.oxygen}>The Analogy</Pill>
+              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>
+                The Mars Colony & The Oxygen Tank
+              </div>
+              <div style={{ fontSize:13, color:T.oxygen, fontWeight:600, marginBottom:16 }}>
+                Your investments are the colony. Your emergency cash is the spacesuit.
+              </div>
+
+              <WBPanel title="Jessica's Whiteboard" color={T.oxygen}>
+                {(play) => <WB_SpaceStation play={play} />}
+              </WBPanel>
+
+              {/* Analogy breakdown */}
+              {[
+                {
+                  icon:"🧱",
+                  title:"The Mars Colony = Your Growth Engine",
+                  body:"Your index funds and portfolio are the structural bricks of your long-term wealth. They are built to stay in place for decades. Every time you pull a brick out of the wall to pay for an emergency, you damage the structure — and worse, you might be pulling it out right when the market is at its lowest.",
+                  color: T.colony,
+                },
+                {
+                  icon:"🛸",
+                  title:"The Oxygen Tank = Your Emergency Cash",
+                  body:"Your liquid HYSA cash is the oxygen attached directly to your spacesuit. Its only job is to keep you alive during a short-term emergency. It doesn't make you rich. It keeps you safe — so your colony never has to be torn down.",
+                  color: T.oxygen,
+                },
+              ].map((item, i) => (
+                <div key={i} style={{
+                  background:T.navy, borderRadius:12, padding:"14px 16px",
+                  marginBottom:12, borderLeft:`3px solid ${item.color}`,
+                }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                    <span style={{ fontSize:20 }}>{item.icon}</span>
+                    <div style={{ fontSize:13, fontWeight:700, color:item.color }}>{item.title}</div>
+                  </div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7 }}>{item.body}</div>
+                </div>
+              ))}
+
+              {/* The key insight */}
+              <div style={{
+                background:`${T.amber}12`, border:`1px solid ${T.amber}40`,
+                borderRadius:12, padding:"14px 16px", marginBottom:16,
+              }}>
+                <div style={{ fontSize:12, fontWeight:700, color:T.amber, marginBottom:6 }}>
+                  The critical insight:
+                </div>
+                <div style={{ fontSize:13, color:T.white, lineHeight:1.7 }}>
+                  A temporary 15% market dip is completely normal. If you're forced to sell during that dip because you have no oxygen tank — you just turned a{" "}
+                  <span style={{ color:T.amber, fontWeight:700 }}>temporary paper loss</span>
+                  {" "}into a{" "}
+                  <span style={{ color:T.red, fontWeight:700 }}>permanent capital loss.</span>
+                  {" "}Wall Street wins. You lose.
+                </div>
+              </div>
+
+              <WBPanel title="Same Dip — Two Outcomes" color={T.red}>
+                {(play) => <WB_ForcedSell play={play} monthsCovered={cushionMonths} />}
+              </WBPanel>
+
+              <Btn color={T.oxygen} onClick={() => setPart(2)}>Show me the rule →</Btn>
+            </Card>
+          </Fade>
+        )}
+
+        {/* ═══ PART 2: THE RULE ═══ */}
+        {part === 2 && (
+          <Fade>
+            <Card>
+              <Pill color={T.teal}>The Rule</Pill>
+              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>
+                Two buckets. Two jobs. Never mixed.
+              </div>
+              <div style={{ fontSize:13, color:T.slate, marginBottom:18 }}>
+                We split your capital with a hard mathematical line. Each bucket has exactly one job.
+              </div>
+
+              {/* Bucket A */}
+              <div style={{
+                background:T.navyDeep, border:`2px solid ${T.oxygen}`,
+                borderRadius:14, padding:"16px 18px", marginBottom:12,
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                  <span style={{ fontSize:28 }}>🛸</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:800, color:T.oxygen }}>Bucket A — The Oxygen Tank</div>
+                    <div style={{ fontSize:11, color:T.slate }}>High-Yield Savings Account (HYSA)</div>
+                  </div>
+                </div>
+                {[
+                  { icon:"✓", text:"100% liquid — withdraw in 24 hours, no penalty", color:T.teal },
+                  { icon:"✓", text:"3–6 months of living expenses, no more", color:T.teal },
+                  { icon:"✓", text:"Earns interest to fight inflation — but never invested", color:T.teal },
+                  { icon:"✗", text:"Never used for weekend trips, new gadgets, or market dips", color:T.red },
+                ].map((r, i) => (
+                  <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:6 }}>
+                    <span style={{ fontSize:12, color:r.color, fontWeight:700, marginTop:1, flexShrink:0 }}>{r.icon}</span>
+                    <span style={{ fontSize:12, color:T.offWhite, lineHeight:1.5 }}>{r.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bucket B */}
+              <div style={{
+                background:T.navyDeep, border:`2px solid ${T.colony}`,
+                borderRadius:14, padding:"16px 18px", marginBottom:16,
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                  <span style={{ fontSize:28 }}>🚀</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:800, color:T.colony }}>Bucket B — The Growth Engine</div>
+                    <div style={{ fontSize:11, color:T.slate }}>Brokerage Account / NISA</div>
+                  </div>
+                </div>
+                {[
+                  { icon:"✓", text:"Minimum 5-year horizon — this money does not leave", color:T.teal },
+                  { icon:"✓", text:"Every spare yen after the oxygen tank is full goes here", color:T.teal },
+                  { icon:"✓", text:"Designed to ride out dips — that's the whole point", color:T.teal },
+                  { icon:"✗", text:"Never touched for emergencies — that's what Bucket A is for", color:T.red },
+                ].map((r, i) => (
+                  <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:6 }}>
+                    <span style={{ fontSize:12, color:r.color, fontWeight:700, marginTop:1, flexShrink:0 }}>{r.icon}</span>
+                    <span style={{ fontSize:12, color:T.offWhite, lineHeight:1.5 }}>{r.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* The order of operations */}
+              <div style={{
+                background:`${T.amber}12`, border:`1px solid ${T.amber}40`,
+                borderRadius:12, padding:"14px 16px", marginBottom:16,
+              }}>
+                <div style={{ fontSize:12, fontWeight:700, color:T.amber, marginBottom:8 }}>
+                  The order of operations:
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  {[
+                    { label:"Fill Bucket A", sub:"3–6 mo expenses", icon:"🛸", color:T.oxygen },
+                    { label:"→", sub:"", icon:"", color:T.slate },
+                    { label:"Deploy to Bucket B", sub:"every extra yen", icon:"🚀", color:T.colony },
+                  ].map((s, i) => (
+                    s.label === "→"
+                      ? <div key={i} style={{ fontSize:20, color:T.slate }}>→</div>
+                      : <div key={i} style={{ flex:1, textAlign:"center", background:T.navyDeep, borderRadius:10, padding:"10px 8px" }}>
+                          <div style={{ fontSize:20, marginBottom:4 }}>{s.icon}</div>
+                          <div style={{ fontSize:11, fontWeight:700, color:s.color }}>{s.label}</div>
+                          <div style={{ fontSize:10, color:T.slate, marginTop:2 }}>{s.sub}</div>
+                        </div>
+                  ))}
+                </div>
+              </div>
+
+              <Btn color={T.teal} onClick={() => setPart(3)}>Calculate my Liquidity Line →</Btn>
+            </Card>
+          </Fade>
+        )}
+
+        {/* ═══ PART 3: CALCULATOR ═══ */}
+        {part === 3 && (
+          <Fade>
+            <Card>
+              <Pill color={T.teal}>The Liquidity Calculator</Pill>
+              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>
+                Your personal Oxygen Tank size
+              </div>
+              <div style={{ fontSize:13, color:T.slate, marginBottom:18 }}>
+                Plug in your real numbers. We'll tell you exactly where the line is drawn.
+              </div>
+
+              <Slider label="Monthly living expenses" value={expenses} onChange={setExpenses}
+                min={50000} max={800000} step={10000} display={fmt(expenses)} color={T.slate} />
+
+              <div style={{ marginBottom:20 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                  <span style={{ fontSize:13, color:T.slate }}>Oxygen tank target</span>
+                  <div style={{ display:"flex", gap:8 }}>
+                    {[3,4,6].map(m => (
+                      <button key={m} onClick={() => setMonthsTarget(m)} style={{
+                        padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer",
+                        border:`1.5px solid ${monthsTarget===m?T.oxygen:T.navyMid}`,
+                        background:monthsTarget===m?`${T.oxygen}25`:T.navyCard,
+                        color:monthsTarget===m?T.oxygen:T.slate,
+                        transition:"all 0.2s",
+                      }}>{m} mo</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ background:T.navyDeep, borderRadius:10, padding:"12px 14px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span style={{ fontSize:13, color:T.offWhite }}>Your Oxygen Tank target:</span>
+                    <span style={{ fontSize:18, fontWeight:900, color:T.oxygen }}>{fmtFull(oxygenTarget)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Slider label="Current liquid cash (savings)" value={currentCash} onChange={setCurrentCash}
+                min={0} max={3000000} step={10000} display={fmt(currentCash)} color={oxygenFull?T.teal:T.amber} />
+
+              {/* Live oxygen tank fill visual */}
+              <div style={{ marginBottom:16 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                  <span style={{ fontSize:12, color:T.slate }}>Oxygen Tank status</span>
+                  <span style={{ fontSize:13, fontWeight:800, color:oxygenFull?T.teal:T.amber }}>
+                    {Math.min(100, Math.round(oxygenPct))}% full
+                  </span>
+                </div>
+                <div style={{ background:T.navyDeep, borderRadius:6, height:24, overflow:"hidden", position:"relative" }}>
+                  <div style={{
+                    height:"100%",
+                    width:`${Math.min(100, oxygenPct)}%`,
+                    background: oxygenFull
+                      ? `linear-gradient(90deg, ${T.teal}, ${T.oxygen})`
+                      : `linear-gradient(90deg, ${T.amber}, ${T.oxygen}60)`,
+                    borderRadius:6,
+                    transition:"width 0.4s ease",
+                    display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:8,
+                  }}>
+                    {oxygenPct > 20 && (
+                      <span style={{ fontSize:10, fontWeight:700, color:T.navy }}>🛸</span>
+                    )}
+                  </div>
+                  {/* Target line at 100% */}
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:T.slate, marginTop:3 }}>
+                  <span>¥0</span>
+                  <span style={{ color:oxygenFull?T.teal:T.amber }}>Target: {fmtFull(oxygenTarget)}</span>
+                </div>
+              </div>
+
+              {/* Live split summary */}
+              <div style={{
+                background:T.navyDeep, borderRadius:12, padding:"14px 16px", marginBottom:16,
+              }}>
+                <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:0.8, marginBottom:12 }}>
+                  Your Capital Split
+                </div>
+                <div style={{ display:"flex", gap:10 }}>
+                  <div style={{ flex:1, background:`${T.oxygen}15`, border:`1px solid ${T.oxygen}40`, borderRadius:10, padding:"10px", textAlign:"center" }}>
+                    <div style={{ fontSize:10, color:T.oxygen, marginBottom:4 }}>🛸 Oxygen Tank</div>
+                    <div style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{fmtFull(Math.min(currentCash, oxygenTarget))}</div>
+                    <div style={{ fontSize:10, color:T.slate, marginTop:2 }}>stays in HYSA</div>
+                  </div>
+                  <div style={{ flex:1, background:`${deployable > 0 ? T.teal : T.slate}15`, border:`1px solid ${deployable > 0 ? T.teal : T.slate}40`, borderRadius:10, padding:"10px", textAlign:"center" }}>
+                    <div style={{ fontSize:10, color: deployable > 0 ? T.teal : T.slate, marginBottom:4 }}>🚀 Deployable</div>
+                    <div style={{ fontSize:16, fontWeight:900, color: deployable > 0 ? T.teal : T.slate }}>{fmtFull(deployable)}</div>
+                    <div style={{ fontSize:10, color:T.slate, marginTop:2 }}>ready to invest</div>
+                  </div>
+                </div>
+
+                {!oxygenFull && (
+                  <div style={{ marginTop:10, fontSize:12, color:T.amber, textAlign:"center", lineHeight:1.5 }}>
+                    ⚠ Fill the oxygen tank first. You need{" "}
+                    <strong>{fmtFull(shortfall)} more</strong> before deploying to the market.
+                  </div>
+                )}
+              </div>
+
+              <Btn color={T.teal} onClick={() => setPart(4)}>See my verdict →</Btn>
+            </Card>
+          </Fade>
+        )}
+
+        {/* ═══ PART 4: VERDICT ═══ */}
+        {part === 4 && (
+          <Fade>
+
+            {/* GREEN LIGHT */}
+            {oxygenFull && (
+              <Card borderColor={T.teal}>
+                <div style={{ textAlign:"center", padding:"10px 0 16px" }}>
+                  <div style={{ fontSize:52, marginBottom:10 }}>🟢</div>
+                  <div style={{ fontSize:22, fontWeight:900, color:T.teal, marginBottom:6 }}>
+                    Oxygen Tank is full.
+                  </div>
+                  <div style={{ fontSize:14, color:T.offWhite, lineHeight:1.6, maxWidth:320, margin:"0 auto" }}>
+                    You are mathematically protected. The Lock-up Fear Boss is defeated.
+                  </div>
+                </div>
+                <Hr />
+
+                {/* The deployable number — hero stat */}
+                <div style={{
+                  background:`${T.teal}15`, border:`2px solid ${T.teal}`,
+                  borderRadius:14, padding:"20px", textAlign:"center", marginBottom:16,
+                }}>
+                  <div style={{ fontSize:12, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>
+                    You can invest today — guilt-free
+                  </div>
+                  <div style={{ fontSize:40, fontWeight:900, color:T.teal, marginBottom:4 }}>
+                    {fmtFull(deployable)}
+                  </div>
+                  <div style={{ fontSize:12, color:T.offWhite }}>
+                    Your Oxygen Tank ({fmtFull(oxygenTarget)}) is secured in HYSA.
+                    This amount is free to deploy to the market.
+                  </div>
+                </div>
+
+                {/* Summary rows */}
+                <VRow icon="🛸" color={T.oxygen} label="Oxygen Tank (HYSA)" value={fmtFull(Math.min(currentCash, oxygenTarget))} />
+                <VRow icon="🚀" color={T.teal}   label="Deployable to market"  value={fmtFull(deployable)} />
+                <VRow icon="📅" color={T.slate}  label="Monthly expenses"      value={fmtFull(expenses)} />
+                <VRow icon="⏱" color={T.slate}  label="Coverage"              value={`${cushionMonths.toFixed(1)} months`} />
+
+                {/* Quest card */}
+                <div style={{
+                  background:`${T.teal}12`, border:`1px solid ${T.teal}40`,
+                  borderRadius:12, padding:"14px 16px", marginTop:14, marginBottom:14,
+                }}>
+                  <div style={{ fontSize:11, color:T.teal, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>
+                    Your next move
+                  </div>
+                  <div style={{ fontSize:15, fontWeight:800, color:T.white, marginBottom:6 }}>
+                    🚀 Deploy {fmtFull(deployable)} to your Growth Engine
+                  </div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6 }}>
+                    Open your NISA or brokerage account. Route exactly {fmtFull(deployable)} into a broad-based index fund.
+                    Your oxygen tank stays untouched in your HYSA. You are protected on both sides.
+                  </div>
+                </div>
+                <Btn color={T.teal} onClick={() => alert("→ Lesson 1-1: The Capital Myth unlocked!")}>
+                  Continue to Lesson 1-1 →
+                </Btn>
+              </Card>
+            )}
+
+            {/* AMBER — needs more oxygen first */}
+            {!oxygenFull && (
+              <Card borderColor={T.amber}>
+                <div style={{ textAlign:"center", padding:"10px 0 16px" }}>
+                  <div style={{ fontSize:52, marginBottom:10 }}>🛸</div>
+                  <div style={{ fontSize:22, fontWeight:900, color:T.amber, marginBottom:6 }}>
+                    Fill the tank first.
+                  </div>
+                  <div style={{ fontSize:14, color:T.offWhite, lineHeight:1.6, maxWidth:320, margin:"0 auto" }}>
+                    You understand the rule. Now your job is to execute it before deploying to the market.
+                  </div>
+                </div>
+                <Hr />
+
+                {/* Shortfall hero stat */}
+                <div style={{
+                  background:`${T.amber}12`, border:`2px solid ${T.amber}`,
+                  borderRadius:14, padding:"20px", textAlign:"center", marginBottom:16,
+                }}>
+                  <div style={{ fontSize:12, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>
+                    Amount needed to unlock investing
+                  </div>
+                  <div style={{ fontSize:40, fontWeight:900, color:T.amber, marginBottom:4 }}>
+                    {fmtFull(shortfall)}
+                  </div>
+                  <div style={{ fontSize:12, color:T.offWhite }}>
+                    Once your HYSA holds {fmtFull(oxygenTarget)}, your oxygen tank is full.
+                    Every yen after that goes straight to the market.
+                  </div>
+                </div>
+
+                <VRow icon="🛸" color={T.oxygen} label="Current cash"        value={fmtFull(currentCash)} />
+                <VRow icon="🎯" color={T.amber}  label="Oxygen Tank target"  value={fmtFull(oxygenTarget)} />
+                <VRow icon="⚠" color={T.amber}  label="Shortfall"           value={fmtFull(shortfall)} />
+
+                {/* Quest card */}
+                <div style={{
+                  background:`${T.amber}12`, border:`1px solid ${T.amber}40`,
+                  borderRadius:12, padding:"14px 16px", marginTop:14, marginBottom:14,
+                }}>
+                  <div style={{ fontSize:11, color:T.amber, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>
+                    Your current quest
+                  </div>
+                  <div style={{ fontSize:15, fontWeight:800, color:T.white, marginBottom:6 }}>
+                    🛸 Build the {fmtFull(oxygenTarget)} Oxygen Tank
+                  </div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6 }}>
+                    Open a High-Yield Savings Account. Set up an automatic transfer until you hit {fmtFull(oxygenTarget)}.
+                    Come back when it's full — your {monthsTarget}-month shield will be in place and you'll
+                    have a green light to deploy to the market with zero fear of getting trapped.
+                  </div>
+                </div>
+
+                <div style={{ display:"flex", gap:10 }}>
+                  <Btn color={T.amber} style={{ flex:1, color:T.navy }}
+                    onClick={() => alert("→ HYSA setup guide")}>
+                    Set up my HYSA
+                  </Btn>
+                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }}
+                    onClick={() => setPart(3)}>
+                    Adjust numbers
+                  </Btn>
+                </div>
+              </Card>
+            )}
+
+            <button onClick={() => setPart(0)} style={{
+              display:"block", margin:"20px auto 0",
+              background:"none", border:"none", color:T.slate,
+              fontSize:12, cursor:"pointer", textDecoration:"underline",
+            }}>← Start lesson over</button>
+          </Fade>
+        )}
+
+      </div>
     </div>
   );
 }
 
-function SliderRow({ label, val, display, min, max, step, onChange }) {
+// ── Shared components ─────────────────────────────────────────
+function Fade({ children }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), 40); return () => clearTimeout(t); }, []);
   return (
-    <div style={{ marginBottom: "16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <span style={{ fontSize: "14px", color: T.offwhite }}>{label}</span>
-        <span style={{ fontSize: "15px", fontWeight: 700, color: T.teal }}>{display}</span>
-      </div>
-      <input
-        type="range" min={min} max={max} step={step} value={val}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: T.teal }}
-      />
+    <div style={{ opacity:show?1:0, transform:show?"none":"translateY(12px)", transition:"opacity 0.4s ease, transform 0.4s ease" }}>
+      {children}
     </div>
   );
 }
-
-function Calculator({ onNext }) {
-  const [tab, setTab]   = useState(1);
-  const [amt, setAmt]   = useState(500);
-  const [mo,  setMo]    = useState(5000);
-  const [yr,  setYr]    = useState(10);
-
+function Card({ children, borderColor }) {
   return (
-    <div>
-      {/* Tab row */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-        {[{ id: 1, label: "What ¥X buys today" }, { id: 2, label: "Keep buying monthly" }].map((t) => (
-          <div
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            style={{
-              flex: 1, padding: "10px", borderRadius: "10px", cursor: "pointer", textAlign: "center",
-              fontSize: "13px", fontWeight: 600,
-              background: T.navyCard,
-              color:  tab === t.id ? T.teal  : T.slate,
-              border: "1.5px solid " + (tab === t.id ? T.teal : "transparent"),
-            }}
-          >
-            {t.label}
-          </div>
-        ))}
-      </div>
-
-      {tab === 1 && (
-        <>
-          <SliderRow label="Amount to invest" val={amt} display={fmtYen(amt)} min={500} max={50000} step={500} onChange={setAmt} />
-          <TabToday amt={amt} />
-        </>
-      )}
-      {tab === 2 && (
-        <>
-          <SliderRow label="Monthly investment" val={mo} display={fmtYen(mo)} min={500} max={50000} step={500} onChange={setMo} />
-          <SliderRow label="Years" val={yr} display={yr + " years"} min={1} max={30} step={1} onChange={setYr} />
-          <TabDCA mo={mo} yr={yr} />
-        </>
-      )}
-
-      <PrimaryBtn onClick={() => onNext(mo)}>See my verdict</PrimaryBtn>
+    <div style={{ background:T.navyCard, borderRadius:16, padding:"20px 18px", marginBottom:16,
+      border:`1px solid ${borderColor||T.navyMid}`, transition:"border-color 0.3s" }}>
+      {children}
     </div>
   );
 }
-
-// ── VERDICT ────────────────────────────────────────────────
-
-function Verdict({ mo, onBack }) {
-  const isGreen = mo >= 1000;
-  const { future, invested } = calcDCA(mo, 10);
-
+function Pill({ children, color }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0px" }}>
-      <div style={{ fontSize: "48px", textAlign: "center", margin: "16px 0 10px" }}>
-        {isGreen ? "🟢" : "🟡"}
-      </div>
-      <div style={{ fontSize: "22px", fontWeight: 700, textAlign: "center", marginBottom: "10px", color: isGreen ? T.teal : T.amber }}>
-        {isGreen ? "You're ready for the next level." : "Almost. Let's fix one thing first."}
-      </div>
-      <div style={{ fontSize: "15px", color: T.offwhite, textAlign: "center", lineHeight: 1.6, marginBottom: "20px" }}>
-        {isGreen
-          ? "With " + fmtYen(mo) + "/month, you're not just dabbling — you're building. Over 10 years at 7%, that habit turns into " + fmtYen(future) + ". The market doesn't care about your feelings. It cares about your consistency."
-          : "You can technically start with " + fmtYen(mo) + " — but at that level, fees can eat your returns. The goal is to get to ¥1,000/month minimum before automating. That's your quest."}
-      </div>
-
-      {isGreen ? (
-        <Card>
-          <div style={{ fontSize: "12px", color: T.slate, marginBottom: "4px" }}>Your projected portfolio (10 yr)</div>
-          <div style={{ fontSize: "24px", fontWeight: 700, color: T.teal }}>{fmtYen(future)}</div>
-          <div style={{ fontSize: "13px", color: T.slate, marginTop: "4px" }}>
-            vs {fmtYen(invested)} invested · {(future / invested).toFixed(1)}x multiplier
-          </div>
-        </Card>
-      ) : (
-        <div style={{
-          background: T.navyCard, borderRadius: "12px", padding: "16px",
-          borderLeft: "3px solid " + T.amber, marginBottom: "16px",
-        }}>
-          <div style={{ fontSize: "12px", color: T.slate, marginBottom: "6px" }}>Your quest</div>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: T.white, marginBottom: "6px" }}>
-            Increase monthly investment to ¥1,000
-          </div>
-          <div style={{ fontSize: "13px", color: T.slate }}>
-            Check your expense audit from Lesson 1-2 — find ¥500 more.
-          </div>
-        </div>
-      )}
-
-      {isGreen
-        ? <PrimaryBtn onClick={() => alert("Lesson 1-3: Volatility vs. Ruin — coming next!")}>Next: Lesson 1-3 — Volatility vs. Ruin →</PrimaryBtn>
-        : (
-          <>
-            <PrimaryBtn onClick={() => alert("Lesson 1-3: Volatility vs. Ruin — coming next!")}>I'll hit ¥1,000 — unlock Lesson 1-3 →</PrimaryBtn>
-            <GhostBtn onClick={onBack}>← Adjust my numbers</GhostBtn>
-          </>
-        )
-      }
+    <div style={{ display:"inline-block", fontSize:10, fontWeight:700, letterSpacing:1.5,
+      textTransform:"uppercase", color, border:`1px solid ${color}`, borderRadius:6, padding:"3px 8px", marginBottom:12 }}>
+      {children}
     </div>
   );
 }
-
-// ── SCREENS ────────────────────────────────────────────────
-
-function S0({ onNext }) {
+function Slider({ label, value, onChange, min, max, step, display, color }) {
   return (
-    <Screen>
-      <Dots total={5} current={0} />
-      <PartLabel text="Lesson 1-1 · The Capital Myth" />
-      <div style={{ fontSize: "28px", fontWeight: 700, color: T.white, lineHeight: 1.2, margin: "16px 0 20px" }}>
-        "I'll start investing when I have more money."
+    <div style={{ marginBottom:20 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+        <span style={{ fontSize:13, color:T.slate }}>{label}</span>
+        <span style={{ fontSize:16, fontWeight:800, color }}>{display}</span>
       </div>
-      <div style={{ fontSize: "15px", color: T.offwhite, lineHeight: 1.65, marginBottom: "20px" }}>
-        Sound familiar? You've told yourself this. Maybe more than once.
-        <br /><br />
-        Here's the brutal truth —{" "}
-        <span style={{ color: T.teal, fontWeight: 700 }}>
-          that sentence has cost people more wealth than any market crash in history.
-        </span>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width:"100%", accentColor:color, cursor:"pointer" }} />
+      <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:T.slate, marginTop:2 }}>
+        <span>{fmt(min)}</span><span>{fmt(max)}</span>
       </div>
-      <MythBox>You need thousands — maybe tens of thousands — to start investing.</MythBox>
-      <TruthBox>
-        You can own a piece of the world's biggest companies{" "}
-        <span style={{ color: T.teal, fontWeight: 700 }}>today</span>, with ¥500 in your pocket.
-      </TruthBox>
-      <JessicaQuote>
-        "On the trading desk, we didn't ask clients how much they had. We asked them what they were waiting for. The answer was always the same: 'enough'. Enough never comes unless you start."
-      </JessicaQuote>
-      <PrimaryBtn onClick={onNext}>I'm listening — show me how</PrimaryBtn>
-    </Screen>
-  );
-}
-
-function S1({ onNext }) {
-  return (
-    <Screen>
-      <Dots total={5} current={1} />
-      <PartLabel text="Part 1 · The Analogy" />
-      <div style={{ fontSize: "22px", fontWeight: 700, color: T.white, marginBottom: "10px" }}>The Pizza Problem</div>
-      <div style={{ fontSize: "15px", color: T.offwhite, lineHeight: 1.65, marginBottom: "16px" }}>
-        Imagine the most expensive pizza in Tokyo. ¥28,000 a slice. You can't afford the whole pie — so you walk away hungry, right?
-        <br /><br />
-        <span style={{ color: T.teal, fontWeight: 700 }}>Wrong.</span>{" "}
-        What if you could split it with 56 people, each paying ¥500, and every topping added still belongs to you proportionally?
-      </div>
-      <Whiteboard />
-      <PrimaryBtn onClick={onNext}>Got it — what's the rule?</PrimaryBtn>
-    </Screen>
-  );
-}
-
-function S2({ onNext }) {
-  return (
-    <Screen>
-      <Dots total={5} current={2} />
-      <PartLabel text="Part 2 · The Rule" />
-      <div style={{ fontSize: "22px", fontWeight: 700, color: T.white, marginBottom: "10px" }}>
-        Fractional Ownership. No Minimum. No Myth.
-      </div>
-      <div style={{ fontSize: "15px", color: T.offwhite, lineHeight: 1.65, marginBottom: "14px" }}>
-        Here's how it actually works — no fluff.
-      </div>
-
-      <MythBox>1 share of Apple = ¥28,000. Take it or leave it.</MythBox>
-      <div style={{
-        background: T.teal + "15", border: "1px solid " + T.teal + "40",
-        borderRadius: "12px", padding: "14px", marginBottom: "12px",
-      }}>
-        <div style={{ fontSize: "11px", fontWeight: 700, color: T.teal, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>
-          New world — fractional shares
-        </div>
-        <div style={{ fontSize: "14px", color: T.offwhite, lineHeight: 1.5 }}>
-          You buy{" "}
-          <span style={{ color: T.teal, fontWeight: 700 }}>¥500 worth</span>. You own{" "}
-          <span style={{ color: T.teal, fontWeight: 700 }}>0.0178 of a share</span>. When Apple goes up 10%, your slice goes up 10% too. Proportional. Always.
-        </div>
-      </div>
-
-      <Card>
-        <div style={{ fontSize: "12px", color: T.slate, marginBottom: "6px" }}>The even better news — ETFs</div>
-        <div style={{ fontSize: "14px", color: T.offwhite, lineHeight: 1.6 }}>
-          An ETF like{" "}
-          <span style={{ color: T.teal, fontWeight: 700 }}>eMAXIS Slim S&P 500</span>{" "}
-          starts at{" "}
-          <span style={{ color: T.teal, fontWeight: 700 }}>¥100</span>{" "}
-          per unit — and you're instantly diversified across 500 American companies.
-          <br /><br />
-          This isn't a side door. This is{" "}
-          <span style={{ color: T.teal, fontWeight: 700 }}>the same door</span>{" "}
-          institutional investors use.
-        </div>
-      </Card>
-
-      <JessicaQuote>
-        "The minimum isn't about money. It's about deciding. ¥500 invested beats ¥500,000 talked about."
-      </JessicaQuote>
-      <PrimaryBtn onClick={onNext}>Show me with my own numbers</PrimaryBtn>
-    </Screen>
-  );
-}
-
-function S3({ onNext }) {
-  return (
-    <Screen>
-      <Dots total={5} current={3} />
-      <PartLabel text="Part 3 · The Calculator" />
-      <div style={{ fontSize: "22px", fontWeight: 700, color: T.white, marginBottom: "16px" }}>
-        Your ¥500. Calculated.
-      </div>
-      <Calculator onNext={onNext} />
-    </Screen>
-  );
-}
-
-function S4({ mo, onBack }) {
-  return (
-    <Screen>
-      <Dots total={5} current={4} />
-      <PartLabel text="Part 4 · The Verdict" />
-      <Verdict mo={mo} onBack={onBack} />
-    </Screen>
-  );
-}
-
-// ── ROOT ───────────────────────────────────────────────────
-
-export default function Lesson11() {
-  const [step, setStep] = useState(0);
-  const [mo,   setMo]   = useState(5000);
-
-  function handleCalcNext(chosenMo) {
-    setMo(chosenMo);
-    setStep(4);
-  }
-
-  return (
-    <div style={{ background: T.navy, minHeight: "100vh" }}>
-      {step === 0 && <S0 onNext={() => setStep(1)} />}
-      {step === 1 && <S1 onNext={() => setStep(2)} />}
-      {step === 2 && <S2 onNext={() => setStep(3)} />}
-      {step === 3 && <S3 onNext={handleCalcNext} />}
-      {step === 4 && <S4 mo={mo} onBack={() => setStep(3)} />}
     </div>
+  );
+}
+function Hr() { return <div style={{ height:1, background:T.navyMid, margin:"14px 0 18px" }} />; }
+function VRow({ icon, color, label, value }) {
+  return (
+    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+      padding:"10px 0", borderBottom:`1px solid ${T.navyMid}`, fontSize:13 }}>
+      <span style={{ color:T.slate }}>{label}</span>
+      <span style={{ color, fontWeight:700 }}>{icon} {value}</span>
+    </div>
+  );
+}
+function Btn({ children, onClick, color, disabled, style }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{
+      display:"block", width:"100%", padding:"15px", marginTop:14, borderRadius:12, border:"none",
+      background:disabled?T.navyMid:color,
+      color:color===T.amber?T.navy:T.white,
+      fontSize:15, fontWeight:800, cursor:disabled?"not-allowed":"pointer",
+      opacity:disabled?0.45:1, transition:"opacity 0.2s", ...style }}>
+      {children}
+    </button>
   );
 }
