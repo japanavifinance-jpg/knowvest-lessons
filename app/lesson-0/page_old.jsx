@@ -1,19 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-//import { useSearchParams } from "next/navigation";
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDFVDqRSY3AFRw00aF7uiAo1yXJGHNhA5U",
-  authDomain: "japanaviwealth.firebaseapp.com",
-  projectId: "japanaviwealth",
-  storageBucket: "japanaviwealth.firebasestorage.app",
-  messagingSenderId: "886986947572",
-  appId: "1:886986947572:web:2ea442a6ffd873e21157a1"
-};
-const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(firebaseApp);
 
 const T = {
   navy:"#0D1B2A", navyMid:"#152130", navyCard:"#1C2D3F", navyDeep:"#0A1520",
@@ -433,10 +419,6 @@ const EMOTIONS = [
 
 // ── Main ──────────────────────────────────────────────────────
 export default function Level0() {
-  const searchParams = useSearchParams();
-  //const uid = searchParams.get("uid");
-  const uid = sessionStorage.getItem("knowvest_uid");
-
   const [part, setPart]               = useState(0);
   const [emotion, setEmotion]         = useState(null);
   const [hasDebt, setHasDebt]         = useState(null);
@@ -445,28 +427,6 @@ export default function Level0() {
   const [savings, setSavings]         = useState(150000);
   const [expenses, setExpenses]       = useState(200000);
   const topRef = useRef(null);
-
-  async function completeLesson(outcome) {
-    if (!uid) return;
-    try {
-      const ref = doc(db, "users", uid, "progress", "summary");
-      const update = {
-        level0: {
-          status: "complete",
-          outcome,
-          completedAt: serverTimestamp(),
-        }
-      };
-      if (outcome === "green") {
-        update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
-      }
-      await setDoc(ref, update, { merge: true });
-    } catch (err) {
-      console.error("Failed to save progress:", err);
-    }
-    //window.location.href = "https://project-0d07n.vercel.app/roadmap?uid=" + uid;
-    window.location.href = "https://project-0d07n.vercel.app/roadmap";
-  }
 
   const profile        = EMOTIONS.find(e => e.id === emotion);
   const monthsCovered  = savings / Math.max(expenses, 1);
@@ -484,12 +444,6 @@ export default function Level0() {
   const scoreColor = auditScore >= 80 ? T.teal : auditScore >= 40 ? T.amber : T.red;
 
   useEffect(() => { topRef.current?.scrollIntoView({ behavior:"smooth" }); }, [part]);
-
-  useEffect(() => {
-    if (!uid) return;
-    const ref = doc(db, "users", uid, "progress", "summary");
-    setDoc(ref, { level0: { status: "inprogress" } }, { merge: true }).catch(() => {});
-  }, [uid]);
 
   const LABELS = ["The Mirror","The Wake-Up","Debt Audit","Cushion Audit","Your Verdict"];
 
@@ -737,7 +691,7 @@ export default function Level0() {
                 <Hr />
                 <VRow icon="✓" color={T.teal} label="Debt check" value={hasDebt?`${debtRate}% — below threshold`:"Debt-free"} />
                 <VRow icon="✓" color={T.teal} label="Emergency cushion" value={`${monthsCovered.toFixed(1)} months covered`} />
-                <Btn color={T.teal} onClick={() => completeLesson("green")}>Unlock Level 1 →</Btn>
+                <Btn color={T.teal} onClick={() => alert("Level 1 unlocked!")}>Unlock Level 1 →</Btn>
               </Card>
             )}
 
@@ -764,8 +718,8 @@ export default function Level0() {
                 <VRow icon="✗" color={T.red} label="High-interest debt" value={`${debtRate}% — blocks Level 1`} />
                 <VRow icon={cushionOk?"✓":"⚠"} color={cushionOk?T.teal:T.amber} label="Emergency cushion" value={cushionOk?`${monthsCovered.toFixed(1)} mo ✓`:"Still needed"} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.red} style={{ flex:1 }} onClick={() => completeLesson("blocked_debt")}>Learn the strategy</Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}>Preview Level 1</Btn>
+                  <Btn color={T.red} style={{ flex:1 }} onClick={() => alert("Debt lesson")}>Learn the strategy</Btn>
+                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => alert("Level 1 preview")}>Preview Level 1</Btn>
                 </div>
               </Card>
             )}
@@ -793,8 +747,8 @@ export default function Level0() {
                 <VRow icon="✓" color={T.teal} label="Debt check" value={hasDebt?`${debtRate}% — clean`:"Debt-free"} />
                 <VRow icon="⚠" color={T.amber} label="Emergency cushion" value={`${monthsCovered.toFixed(1)} of 3 months`} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => completeLesson("blocked_no_fund")}>Build my cushion</Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Preview Level 1</Btn>
+                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => alert("HYSA lesson")}>Build my cushion</Btn>
+                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => alert("Level 1 preview")}>Preview Level 1</Btn>
                 </div>
               </Card>
             )}

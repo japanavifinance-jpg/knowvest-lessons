@@ -134,6 +134,7 @@ function RoadmapContent() {
 
   useEffect(() => {
     if (!uid) { setScreen('gate'); return; }
+    sessionStorage.setItem('knowvest_uid', uid);
     fetchProgress();
   }, [uid]);
 
