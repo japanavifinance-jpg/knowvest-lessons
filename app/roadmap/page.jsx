@@ -263,7 +263,7 @@ function RoadmapContent() {
 
   const upNext   = getUpNext();
   const l0Theme  = getL0Theme();
-  const showL1   = l0Status === 'complete' && l0Out === 'green';
+  const showL1 = true;
 
   return (
     <div style={s.root}>
