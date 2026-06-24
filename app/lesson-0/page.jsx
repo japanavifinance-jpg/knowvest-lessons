@@ -435,7 +435,17 @@ const EMOTIONS = [
 function Lesson0Content() {
   const searchParams = useSearchParams();
   //const uid = searchParams.get("uid");
-  const uid = sessionStorage.getItem("knowvest_uid");
+  //const uid = sessionStorage.getItem("knowvest_uid");
+// ── FIX: Look at the URL first, fallback to memory storage ──
+  const urlUid = searchParams.get("uid");
+  const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
+
+  // Backup store it if we grabbed it from the URL
+  useEffect(() => {
+    if (urlUid && typeof window !== "undefined") {
+      sessionStorage.setItem("knowvest_uid", urlUid);
+    }
+  }, [urlUid]);
 
   const [part, setPart]               = useState(0);
   const [emotion, setEmotion]         = useState(null);
