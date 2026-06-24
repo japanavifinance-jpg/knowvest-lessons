@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react"; // 👈 1. Added Suspense
 import { useSearchParams } from "next/navigation";
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -431,8 +431,8 @@ const EMOTIONS = [
   },
 ];
 
-// ── Main ──────────────────────────────────────────────────────
-export default function Level0() {
+// ── 2. MOVE CORE LAYOUT AND HOOK LOGIC TO INTERNAL COMPONENT ──
+function Lesson0Content() {
   const searchParams = useSearchParams();
   //const uid = searchParams.get("uid");
   const uid = sessionStorage.getItem("knowvest_uid");
@@ -808,6 +808,19 @@ export default function Level0() {
         )}
       </div>
     </div>
+  );
+}
+
+// ── 3. CLEAN WRAPPED DEFAULT EXPORT FOR NEXT.JS COMPILER ──
+export default function Level0() {
+  return (
+    <Suspense fallback={
+      <div style={{ background: T.navy, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ color: T.slate, fontSize: 14 }}>Initializing Lesson 0 Layout...</div>
+      </div>
+    }>
+      <Lesson0Content />
+    </Suspense>
   );
 }
 
