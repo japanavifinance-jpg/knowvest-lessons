@@ -174,21 +174,21 @@ function RoadmapContent() {
       title: 'The Mirror',
       desc: "Before we talk about money — let's talk about where you are. Be honest, this isn't graded.",
       cta: '▶ Start lesson', ctaStyle: 'teal',
-      action: () => navigate(`${BASE_URL}/lesson-0`),
+      action: () => navigate(`${BASE_URL}/lesson-0.html`),
     };
     if (l0Status === 'inprogress') return {
       border: '#8DA0B3', eyeColor: '#8DA0B3', eye: '⏸ In progress · Lesson 0',
       title: 'The Mirror',
       desc: "You started this lesson but didn't finish. Pick up where you left off.",
       cta: '▶ Continue lesson', ctaStyle: 'teal',
-      action: () => navigate(`${BASE_URL}/lesson-0`),
+      action: () => navigate(`${BASE_URL}/lesson-0.html`),
     };
     if (l0Status === 'complete' && l0Out !== 'green') return {
       border: '#F5A623', eyeColor: '#F5A623', eye: '⚠ Action needed · Lesson 0',
       title: 'Not ready to invest yet',
       desc: "Based on your audit, you have steps to take before investing. Clear your debt or build your emergency fund first.",
       cta: '↺ Re-take the audit', ctaStyle: 'amber',
-      action: () => navigate(`${BASE_URL}/lesson-0`),
+      action: () => navigate(`${BASE_URL}/lesson-0.html`),
     };
 
     const next = LESSONS.find(l => {
@@ -297,7 +297,7 @@ function RoadmapContent() {
         <div style={s.secLabel}>Level 0 · The Mirror</div>
         <div
           style={{ ...s.l0card, background: l0Theme.bg, borderColor: l0Theme.border }}
-          onClick={() => navigate(`${BASE_URL}/lesson-0`)}
+          onClick={() => navigate(`${BASE_URL}/lesson-0.html`)}
         >
           <div style={s.l0emoji}>🪞</div>
           <div style={s.l0info}>

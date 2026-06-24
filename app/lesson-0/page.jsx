@@ -475,7 +475,9 @@ function Lesson0Content() {
       console.error("Failed to save progress:", err);
     }
     //window.location.href = "https://project-0d07n.vercel.app/roadmap?uid=" + uid;
-    window.location.href = "https://project-0d07n.vercel.app/roadmap";
+    //window.location.href = "https://project-0d07n.vercel.app/roadmap";
+    // Inside completeLesson() change this line at the bottom:
+    window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
   }
 
   const profile        = EMOTIONS.find(e => e.id === emotion);
