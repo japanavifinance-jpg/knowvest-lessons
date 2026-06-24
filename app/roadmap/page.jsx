@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react'; // 👈 1. Added Suspense
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
@@ -20,7 +20,6 @@ const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : get
 const db = getFirestore(firebaseApp);
 
 // ── LESSON CONFIG ──
-// Add new lessons here as the curriculum grows
 const LESSONS = [
   {
     id: 'lesson_1_1',
@@ -64,12 +63,9 @@ const BASE_URL = 'https://project-0d07n.vercel.app';
 
 // ── STYLES ──
 const s = {
-  // layout
   root:        { fontFamily: "'Inter', system-ui, sans-serif", background: '#0D1B2A', color: '#F0F4F8', minHeight: '100vh' },
   center:      { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '32px 24px', textAlign: 'center', gap: 12 },
   body:        { padding: 16 },
-
-  // hero
   hero:        { background: '#0A1520', padding: '28px 20px 20px', borderBottom: '1px solid #1C2D3F' },
   eyebrow:     { fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1D9E75', marginBottom: 8 },
   headline:    { fontSize: 26, fontWeight: 700, lineHeight: 1.15, marginBottom: 4 },
@@ -77,27 +73,19 @@ const s = {
   chips:       { display: 'flex', gap: 8, flexWrap: 'wrap' },
   chip:        { display: 'flex', alignItems: 'center', gap: 5, background: '#1C2D3F', border: '1px solid #263d55', borderRadius: 20, padding: '5px 10px', fontSize: 12, color: '#C8D6E2', fontWeight: 500 },
   chipDot:     { width: 6, height: 6, borderRadius: '50%', background: '#378ADD' },
-
-  // up next
   upnext:      { borderRadius: 16, padding: 16, marginBottom: 20, border: '1.5px solid', background: '#0d1a28' },
   unEyebrow:   { fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 },
   unTitle:     { fontSize: 17, fontWeight: 700, color: '#F0F4F8', marginBottom: 5 },
   unDesc:      { fontSize: 13, color: '#8DA0B3', lineHeight: 1.5, marginBottom: 14 },
   ctaTeal:     { width: '100%', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: '#1D9E75', color: '#F0F4F8', letterSpacing: '0.02em' },
   ctaAmber:    { width: '100%', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: '#2a1f00', color: '#F5A623', border: '1px solid #F5A623', letterSpacing: '0.02em' },
-
-  // section
   secLabel:    { fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8DA0B3', marginBottom: 12 },
-
-  // l0 card
   l0card:      { borderRadius: 14, padding: '14px 16px', border: '1.5px solid', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' },
   l0emoji:     { fontSize: 22, lineHeight: 1 },
   l0info:      { flex: 1 },
   l0num:       { fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 },
   l0title:     { fontSize: 14, fontWeight: 700, color: '#F0F4F8' },
   l0status:    { display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 500 },
-
-  // grid
   grid:        { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 },
   card:        { borderRadius: 14, padding: 13, border: '1.5px solid', display: 'flex', flexDirection: 'column', gap: 5, minHeight: 115 },
   cardEmoji:   { fontSize: 18, lineHeight: 1 },
@@ -105,21 +93,15 @@ const s = {
   cardTitle:   { fontSize: 13, fontWeight: 700, color: '#F0F4F8', lineHeight: 1.3, flex: 1 },
   cardStatus:  { display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 500, marginTop: 2 },
   dot:         { width: 5, height: 5, borderRadius: '50%', flexShrink: 0 },
-
-  // boss
   boss:        { border: '1.5px dashed #F5A623', borderRadius: 14, background: '#0D1B2A', padding: 16, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 },
   bossIcon:    { fontSize: 28 },
   bossLabel:   { fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F5A623', marginBottom: 3 },
   bossTitle:   { fontSize: 15, fontWeight: 700, color: '#F0F4F8', marginBottom: 2 },
   bossSub:     { fontSize: 12, color: '#8DA0B3' },
-
-  // dividers
   divider:     { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 },
   divLine:     { flex: 1, height: 1, background: '#1C2D3F' },
   divPill:     { fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 20, color: '#8DA0B3', border: '1px solid #263d55', background: '#0D1B2A', whiteSpace: 'nowrap' },
   lockedHint:  { fontSize: 11, color: '#8DA0B3', textAlign: 'center', padding: '8px 0 20px', opacity: 0.4 },
-
-  // spinner
   spinWrap:    { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 16 },
   loadText:    { fontSize: 13, color: '#8DA0B3' },
   gateIcon:    { fontSize: 40, marginBottom: 8 },
@@ -127,7 +109,6 @@ const s = {
   gateSub:     { fontSize: 14, color: '#8DA0B3', lineHeight: 1.6, maxWidth: 280 },
 };
 
-// card background + border by state
 const CARD_THEME = {
   locked:     { bg: '#0D1B2A', border: '#1C2D3F', color: '#8DA0B3', opacity: 0.45, cursor: 'default', pointer: 'none' },
   active:     { bg: '#1a2a3d', border: '#378ADD', color: '#378ADD', opacity: 1,    cursor: 'pointer', pointer: 'auto' },
@@ -143,12 +124,12 @@ const L0_THEME = {
   complete_blocked: { bg: '#2a1500', border: '#F5A623', color: '#F5A623', num: 'Level 0 · Done',   text: 'Action needed'  },
 };
 
-// ── MAIN COMPONENT ──
-export default function Roadmap() {
+// ── 2. MOVE CORE ROADMAP LOGIC TO INTERNAL COMPONENT ──
+function RoadmapContent() {
   const searchParams = useSearchParams();
   const uid = searchParams.get('uid');
 
-  const [screen, setScreen]     = useState('loading'); // loading | gate | error | main
+  const [screen, setScreen]     = useState('loading');
   const [progress, setProgress] = useState({});
 
   useEffect(() => {
@@ -168,7 +149,6 @@ export default function Roadmap() {
     }
   }
 
-  // ── DERIVED STATE ──
   const l0       = progress.level0 || {};
   const l0Status = l0.status  || 'not_started';
   const l0Out    = l0.outcome || null;
@@ -188,7 +168,6 @@ export default function Roadmap() {
     window.location.href = `${url}?uid=${uid}`;
   }
 
-  // ── UP NEXT CONFIG ──
   function getUpNext() {
     if (l0Status === 'not_started') return {
       border: '#378ADD', eyeColor: '#378ADD', eye: '▶ Up next · Lesson 0',
@@ -212,7 +191,6 @@ export default function Roadmap() {
       action: () => navigate(`${BASE_URL}/lesson-0`),
     };
 
-    // l0 complete + green — find next lesson
     const next = LESSONS.find(l => {
       const st = lessonStates[l.id]?.status;
       return st === 'active' || st === 'inprogress' || st === 'failed';
@@ -245,7 +223,6 @@ export default function Roadmap() {
     };
   }
 
-  // ── L0 CARD THEME ──
   function getL0Theme() {
     if (l0Status === 'not_started') return L0_THEME.not_started;
     if (l0Status === 'inprogress')  return L0_THEME.inprogress;
@@ -253,7 +230,6 @@ export default function Roadmap() {
     return L0_THEME.complete_blocked;
   }
 
-  // ── SCREENS ──
   if (screen === 'loading') return (
     <div style={s.root}>
       <div style={s.spinWrap}>
@@ -291,7 +267,6 @@ export default function Roadmap() {
 
   return (
     <div style={s.root}>
-
       {/* HERO */}
       <div style={s.hero}>
         <div style={s.eyebrow}>Financial Path</div>
@@ -305,7 +280,6 @@ export default function Roadmap() {
       </div>
 
       <div style={s.body}>
-
         {/* UP NEXT */}
         <div style={{ ...s.upnext, borderColor: upNext.border }}>
           <div style={{ ...s.unEyebrow, color: upNext.eyeColor }}>{upNext.eye}</div>
@@ -402,8 +376,20 @@ export default function Roadmap() {
 
         <div style={s.divider}><div style={s.divLine}/><div style={s.divPill}>Level 4 · Locked 🔒</div><div style={s.divLine}/></div>
         <div style={s.lockedHint}>Portfolio Strategy · 8 lessons</div>
-
       </div>
     </div>
+  );
+}
+
+// ── 3. CLEAN WRAPPED DEFAULT EXPORT FOR NEXT.JS COMPILER ──
+export default function RoadmapPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ background: '#0D1B2A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ color: '#8DA0B3', fontSize: 14 }}>Initializing Layout Roadmap...</div>
+      </div>
+    }>
+      <RoadmapContent />
+    </Suspense>
   );
 }
