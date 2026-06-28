@@ -338,10 +338,12 @@ function QuizContent() {
     }
   };
 
-  const next = () => {
+ // ── FIX: Made this function async to wait for the database write ──
+  const next = async () => {
     if (gameOver || isLast) { 
-      const passed = lives > 0 && score + (chosen?.correct ? 0 : 0) >= 7;
-      saveQuizOutcome(passed, score);
+      const passed = lives > 0 && score >= 7;
+      // Force the browser to wait until Firestore logs the completion
+      await saveQuizOutcome(passed, score);
       setScreen("result"); 
       return; 
     }
