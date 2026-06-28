@@ -54,6 +54,14 @@ const EVENTS = [
   { id:10, icon:"🌊", tag:"Final Event — Japan", tagColor:T.red, title:"Typhoon Damages Your Home", story:"A powerful typhoon hits. Ceiling collapse, ruined belongings, 3 months of temporary housing needed. Your renter's insurance has a gap and won't cover the full amount.", bill:1200000, billLabel:"Repairs + temporary housing", isMarket:false, isBoss:true, choices:[ { label:"Emergency Fund + don't sell investments", icon:"🛸", correct:true, needsTank:true, explain:"Right instinct. Your Emergency Fund covers what it can. The investments stay untouched — even here. The gap between your tank and this bill is exactly what Level 4 is about." }, { label:"Sell investments to cover the gap", icon:"🚀", correct:false, explain:"Even at ¥1.2M, selling the colony is not the answer. The gap between your tank and this bill is what income protection insurance exists to cover — which is exactly what Level 4 teaches." }, { label:"Take a large personal loan", icon:"🏦", correct:false, explain:"A large loan at your most financially vulnerable moment creates a debt burden right when your income may be disrupted by displacement. This is insurance territory — not loan territory." } ], jessica:"" }
 ];
 
+const monthLabel = (total) => {
+  if (total < 12) return total + (total === 1 ? " month" : " months");
+  const y = Math.floor(total/12);
+  const m = total % 12;
+  if (m === 0) return y + (y === 1 ? " year" : " years");
+  return y + (y === 1 ? " year " : " years ") + m + (m === 1 ? " month" : " months");
+};
+
 function QuizContent() {
   const searchParams = useSearchParams();
   const urlUid = searchParams.get("uid");
@@ -147,7 +155,7 @@ function QuizContent() {
     setScore(newScore);
     setTank(newTank);
     if (!isCorrect) setLives(newLives);
-    setHistory(h => [...h, { icon:ev.icon, title:ev.title, correct:isCorrect, label:choice.label }]);
+    setHistory(h => [...h, { icon:ev?.icon, title:ev?.title, correct:isCorrect, label:choice.label }]);
     if (!isCorrect && newLives <= 0) {
       setGameOver(true);
       saveQuizOutcome(false, newScore);
@@ -405,14 +413,14 @@ function QuizContent() {
       {!showTimestamp && !gameOver && ev && (
         <Box borderColor={evBorderColor}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-            <div style={{ fontSize:36 }}>{ev.icon}</div>
+            <div style={{ fontSize:36 }}>{ev?.icon}</div>
             <div>
-              <span style={{ fontSize:9, fontWeight:700, color:ev.tagColor, border:"1px solid " + ev.tagColor + "50", borderRadius:4, padding:"2px 6px", textTransform:"uppercase", letterSpacing:0.8 }}>{ev.tag}</span>
-              {ev.isBoss && <span style={{ fontSize:9, fontWeight:700, color:T.red, border:"1px solid " + T.red + "50", borderRadius:4, padding:"2px 6px", marginLeft:6, textTransform:"uppercase", letterSpacing:0.8 }}>Final Event</span>}
-              <div style={{ fontSize:17, fontWeight:900, marginTop:4 }}>{ev.title}</div>
+              <span style={{ fontSize:9, fontWeight:700, color:ev?.tagColor, border:"1px solid " + ev?.tagColor + "50", borderRadius:4, padding:"2px 6px", textTransform:"uppercase", letterSpacing:0.8 }}>{ev?.tag}</span>
+              {ev?.isBoss && <span style={{ fontSize:9, fontWeight:700, color:T.red, border:"1px solid " + T.red + "50", borderRadius:4, padding:"2px 6px", marginLeft:6, textTransform:"uppercase", letterSpacing:0.8 }}>Final Event</span>}
+              <div style={{ fontSize:17, fontWeight:900, marginTop:4 }}>{ev?.title}</div>
             </div>
           </div>
-          <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.75, marginBottom:14 }}>{ev.story}</div>
+          <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.75, marginBottom:14 }}>{ev?.story}</div>
           {evBill && (
             <div style={{ background:T.navy, borderRadius:10, padding:"12px 14px", marginBottom:14, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:12, color:T.slate }}>{evBillLabel}</span>
@@ -428,7 +436,7 @@ function QuizContent() {
           {!chosen && (
             <div>
               <div style={{ fontSize:12, color:T.slate, marginBottom:8, fontWeight:600 }}>What do you do?</div>
-              {ev.choices.map((c,i) => {
+              {ev?.choices?.map((c,i) => {
                 const isLocked = c.needsTank && tankEmpty;
                 return (
                   <button key={i} onClick={() => !isLocked && pick(c)} style={{ width:"100%", background:T.navyDeep, border:"2px solid " + (isLocked ? T.slate + "20" : T.navyMid), borderRadius:12, padding:"13px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10, cursor: isLocked ? "not-allowed" : "pointer", textAlign:"left", opacity: isLocked ? 0.35 : 1 }}>
@@ -466,10 +474,24 @@ function QuizContent() {
                   <span style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{yen(tank)}</span>
                 </div>
               )}
-              {ev.jessica && (
+              {ev?.jessica && (
                 <div style={{ background:T.teal + "12", border:"1px solid " + T.teal + "30", borderRadius:10, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ fontSize:11, color:T.teal, fontWeight:700, marginBottom:4 }}>Jessica's note:</div>
                   <div style={{ fontSize:12, color:T.offWhite, lineHeight:1.65, fontStyle:"italic" }}>"{ev.jessica}"</div>
+                </div>
+              )}
+              {ev?.isBoss && (
+                <div style={{ background:T.purple + "18", border:"2px solid " + T.purple + "50", borderRadius:14, padding:"16px", marginBottom:12 }}>
+                  <div style={{ fontSize:11, color:T.purple, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>⚡ Beyond the Oxygen Tank</div>
+                  <div style={{ fontSize:13, color:T.white, lineHeight:1.7, marginBottom:10 }}>A ¥1,200,000 catastrophic event may exceed your Emergency Fund. The answer is <strong style={{ color:T.teal }}>still not to sell investments.</strong></div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7, marginBottom:12 }}>The real solution is <strong style={{ color:T.purple }}>income protection insurance and disaster coverage</strong> — a layer that sits entirely above the oxygen tank.</div>
+                  <div style={{ background:T.navyDeep, borderRadius:10, padding:"12px", display:"flex", gap:10 }}>
+                    <span style={{ fontSize:22 }}>🔒</span>
+                    <div>
+                      <div style={{ fontSize:12, fontWeight:700, color:T.purple }}>Coming in Level 4</div>
+                      <div style={{ fontSize:11, color:T.slate, lineHeight:1.5 }}>We'll cover exactly how to structure protection against catastrophic events — so the colony is never at risk.</div>
+                    </div>
+                  </div>
                 </div>
               )}
               {!gameOver && <Btn color={T.teal} onClick={next}>{isLast ? "See Mission Results →" : "Next Event (" + (idx+2) + "/10) →"}</Btn>}
