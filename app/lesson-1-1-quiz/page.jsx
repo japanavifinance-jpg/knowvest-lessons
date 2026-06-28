@@ -652,7 +652,7 @@ function QuizContent() {
           )}
           {chosen && (
             <div>
-              {/* 💥 Added ?. to chosen across this entire block */}
+              {/* 1. Main Feedback Banner */}
               <div style={{ 
                 background: chosen?.correct ? T.teal + "22" : T.red + "22", 
                 border:"2px solid " + (chosen?.correct ? T.teal : T.red), 
@@ -669,16 +669,18 @@ function QuizContent() {
                 </div>
               </div>
 
-              {!chosen?.correct && {hasDebt?`${debtRate}% — below threshold`:"Debt-free"} && evBill && (
+              {/* 2. FIXED LINE: Clean evaluation without nested curly brackets */}
+              {!chosen?.correct && evBill && (
                 <div style={{ background:T.amber + "18", border:"1px solid " + T.amber + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div>
                     <div style={{ fontSize:10, color:T.amber, textTransform:"uppercase", letterSpacing:0.8, marginBottom:2 }}>20-year compounding cost</div>
                     <div style={{ fontSize:11, color:T.offWhite }}>{yenF(evBill)} withdrawn today at 7%/yr</div>
-                 </div>
+                  </div>
                   <div style={{ fontSize:18, fontWeight:900, color:T.amber }}>{c20(evBill)}</div>
                 </div>
               )}
 
+              {/* 3. Remaining Tank display */}
               {chosen?.correct && evBill && (
                 <div style={{ background:T.oxygen + "18", border:"1px solid " + T.oxygen + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <span style={{ fontSize:13, color:T.offWhite }}>🛸 Tank remaining</span>
