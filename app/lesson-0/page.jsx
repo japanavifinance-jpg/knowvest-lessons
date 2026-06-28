@@ -461,7 +461,7 @@ function Lesson0Content() {
     try {
       const ref = doc(db, "users", uid, "progress", "summary");
       const update = {
-        level0: {
+       level0: {
           status: "complete",
           outcome,
           completedAt: serverTimestamp(),
@@ -469,23 +469,17 @@ function Lesson0Content() {
       };
       if (outcome === "green") {
         update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
+     }
+     await setDoc(ref, update, { merge: true });
+    
+     // ── ONLY REDIRECT OUT OF THE PAGE IF THEY PASSED ──
+      if (outcome === "green") {
+        window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
       }
-      await setDoc(ref, update, { merge: true });
     } catch (err) {
       console.error("Failed to save progress:", err);
     }
-    // ── 🛠️ CUSTOM BRANCH ROUTING ──
-    if (outcome === "green") {
-     // 1. User passed perfectly! Send them back to the roadmap to see Level 1 unlocked
-      window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
-    } 
-    else {
-     // If they click anything else on the failure screens, do NOT leave the page.
-     // Instead, do nothing here because we will handle the tab switches directly on the buttons below!
-     console.log("Progress saved for blocked user: ", outcome);
-    }
   }
-
   const profile        = EMOTIONS.find(e => e.id === emotion);
   const monthsCovered  = savings / Math.max(expenses, 1);
   const cushionOk      = monthsCovered >= 3;
@@ -790,7 +784,7 @@ function Lesson0Content() {
                   }}>
                     Adjust Debt Sliders
                   </Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}> Unlock Level 1 →</Btn>
+                  // <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}> Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
@@ -825,8 +819,8 @@ function Lesson0Content() {
                      setPart(3); 
                   }}>
                     Adjust Cushion Shield
-                 </Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Unlock Level 1 →</Btn>
+                  </Btn>
+                   // <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
