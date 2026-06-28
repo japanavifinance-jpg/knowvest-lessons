@@ -782,7 +782,14 @@ function Lesson0Content() {
                 <VRow icon="✗" color={T.red} label="High-interest debt" value={`${debtRate}% — blocks Level 1`} />
                 <VRow icon={cushionOk?"✓":"⚠"} color={cushionOk?T.teal:T.amber} label="Emergency cushion" value={cushionOk?`${monthsCovered.toFixed(1)} mo ✓`:"Still needed"} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.red} style={{ flex:1 }} onClick={() => completeLesson("blocked_debt")}>Learn the strategy - Go back to lesson</Btn>
+                  <Btn color={T.red} style={{ flex:1 }} onClick={() => {
+                    // First save the state flag to firebase
+                    completeLesson("blocked_debt");
+                   // Instantly teleport them back to the Debt Audit sliders!
+                   setPart(2); 
+                  }}>
+                    Adjust Debt Sliders
+                  </Btn>
                   <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}> Unlock Level 1 →</Btn>
                 </div>
               </Card>
@@ -811,7 +818,14 @@ function Lesson0Content() {
                 <VRow icon="✓" color={T.teal} label="Debt check" value={hasDebt?`${debtRate}% — clean`:"Debt-free"} />
                 <VRow icon="⚠" color={T.amber} label="Emergency cushion" value={`${monthsCovered.toFixed(1)} of 3 months`} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => completeLesson("blocked_no_fund")}>Build my cushion - back to roadmap</Btn>
+                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => {
+                   // First save the state flag to firebase
+                    completeLesson("blocked_no_fund");
+                   // Instantly teleport them back to the Cushion parameters!
+                     setPart(3); 
+                  }}>
+                    Adjust Cushion Shield
+                 </Btn>
                   <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Unlock Level 1 →</Btn>
                 </div>
               </Card>
