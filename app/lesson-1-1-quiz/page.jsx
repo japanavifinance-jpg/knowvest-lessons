@@ -632,7 +632,14 @@ function QuizContent() {
               {ev.choices.map((c,i) => {
                 const isLocked = c.needsTank && tankEmpty;
                 return (
-                  <button key={i} onClick={() => !isLocked && pick(c)} style={{ width:"100%", background:T.navyDeep, border:"2px solid " + (isLocked ? T.slate + "20" : T.navyMid), borderRadius:12, padding:"13px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10, cursor: isLocked ? "not-allowed" : "pointer", textAlign:"left", opacity: isLocked ? 0.35 : 1 }}>
+                  <button key={i} onClick={() => !isLocked && pick(c)} style={{ 
+                    width:"100%", background:T.navyDeep, 
+                    border:"2px solid " + (isLocked ? T.slate + "20" : T.navyMid),
+                    borderRadius:12, padding:"13px 14px", marginBottom:8, 
+                    display:"flex", alignItems:"center", gap:10, 
+                    cursor: isLocked ? "not-allowed" : "pointer", textAlign:"left", 
+                    opacity: isLocked ? 0.35 : 1 
+                  }}>
                     <span style={{ fontSize:20 }}>{isLocked ? "🔒" : c.icon}</span>
                     <div style={{ flex:1 }}>
                       <span style={{ fontSize:13, color:T.white, fontWeight:600 }}>{c.label}</span>
@@ -645,48 +652,47 @@ function QuizContent() {
           )}
           {chosen && (
             <div>
-              <div style={{ background: chosen.correct ? T.teal + "22" : T.red + "22", border:"2px solid " + (chosen.correct ? T.teal : T.red), borderRadius:12, padding:"14px", marginBottom:12, display:"flex", gap:10 }}>
-                <span style={{ fontSize:24 }}>{chosen.correct ? "✅" : "❌"}</span>
+              {/* 💥 Added ?. to chosen across this entire block */}
+              <div style={{ 
+                background: chosen?.correct ? T.teal + "22" : T.red + "22", 
+                border:"2px solid " + (chosen?.correct ? T.teal : T.red), 
+                borderRadius:12, padding:"14px", marginBottom:12, display:"flex", gap:10 
+              }}>
+                <span style={{ fontSize:24 }}>{chosen?.correct ? "✅" : "❌"}</span>
                 <div>
-                  <div style={{ fontSize:13, fontWeight:700, color: chosen.correct ? T.teal : T.red, marginBottom:4 }}>{chosen.correct ? "Correct." : "Wrong bucket."}</div>
-                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.65 }}>{chosen.explain}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color: chosen?.correct ? T.teal : T.red, marginBottom:4 }}>
+                    {chosen?.correct ? "Correct." : "Wrong bucket."}
+                  </div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.65 }}>
+                    {chosen?.explain}
+                  </div>
                 </div>
               </div>
-              {!chosen.correct && evBill && (
+
+              {!chosen?.correct && {hasDebt?`${debtRate}% — below threshold`:"Debt-free"} && evBill && (
                 <div style={{ background:T.amber + "18", border:"1px solid " + T.amber + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div>
                     <div style={{ fontSize:10, color:T.amber, textTransform:"uppercase", letterSpacing:0.8, marginBottom:2 }}>20-year compounding cost</div>
                     <div style={{ fontSize:11, color:T.offWhite }}>{yenF(evBill)} withdrawn today at 7%/yr</div>
-                  </div>
+                 </div>
                   <div style={{ fontSize:18, fontWeight:900, color:T.amber }}>{c20(evBill)}</div>
                 </div>
               )}
-              {chosen.correct && evBill && (
+
+              {chosen?.correct && evBill && (
                 <div style={{ background:T.oxygen + "18", border:"1px solid " + T.oxygen + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <span style={{ fontSize:13, color:T.offWhite }}>🛸 Tank remaining</span>
                   <span style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{yen(tank)}</span>
                 </div>
               )}
+
               {ev.jessica && (
                 <div style={{ background:T.teal + "12", border:"1px solid " + T.teal + "30", borderRadius:10, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ fontSize:11, color:T.teal, fontWeight:700, marginBottom:4 }}>Jessica's note:</div>
                   <div style={{ fontSize:12, color:T.offWhite, lineHeight:1.65, fontStyle:"italic" }}>"{ev.jessica}"</div>
                 </div>
               )}
-              {ev.isBoss && (
-                <div style={{ background:T.purple + "18", border:"2px solid " + T.purple + "50", borderRadius:14, padding:"16px", marginBottom:12 }}>
-                  <div style={{ fontSize:11, color:T.purple, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>⚡ Beyond the Oxygen Tank</div>
-                  <div style={{ fontSize:13, color:T.white, lineHeight:1.7, marginBottom:10 }}>A ¥1,200,000 catastrophic event may exceed your Emergency Fund. The answer is <strong style={{ color:T.teal }}>still not to sell investments.</strong></div>
-                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7, marginBottom:12 }}>The real solution is <strong style={{ color:T.purple }}>income protection insurance and disaster coverage</strong> — a layer that sits entirely above the oxygen tank.</div>
-                  <div style={{ background:T.navyDeep, borderRadius:10, padding:"12px", display:"flex", gap:10 }}>
-                    <span style={{ fontSize:22 }}>🔒</span>
-                    <div>
-                      <div style={{ fontSize:12, fontWeight:700, color:T.purple }}>Coming in Level 4</div>
-                      <div style={{ fontSize:11, color:T.slate, lineHeight:1.5 }}>We'll cover exactly how to structure protection against catastrophic events — so the colony is never at risk.</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+
               {!gameOver && <Btn color={T.teal} onClick={next}>{isLast ? "See Mission Results →" : "Next Event (" + (idx+2) + "/10) →"}</Btn>}
               {gameOver && <Btn color={T.red} onClick={() => setScreen("result")}>See Mission Debrief →</Btn>}
             </div>
