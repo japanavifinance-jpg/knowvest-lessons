@@ -479,14 +479,10 @@ function Lesson0Content() {
      // 1. User passed perfectly! Send them back to the roadmap to see Level 1 unlocked
       window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
     } 
-    else if (outcome === "blocked_debt") {
-     // 2. User failed the Debt Audit. Direct them to your custom debt guide or keep them here
-      window.location.href = `https://project-0d07n.vercel.app/debt-strategy.html?uid=${uid}`; 
-     // (Or replace with whatever route you want for the debt failure step)
-    } 
-    else if (outcome === "blocked_no_fund") {
-     // 3. User failed the Cushion Audit. Direct them to a cushion-building guide
-     window.location.href = `https://project-0d07n.vercel.app/build-cushion.html?uid=${uid}`;
+    else {
+     // If they click anything else on the failure screens, do NOT leave the page.
+     // Instead, do nothing here because we will handle the tab switches directly on the buttons below!
+     console.log("Progress saved for blocked user: ", outcome);
     }
   }
 
