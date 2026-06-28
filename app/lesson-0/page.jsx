@@ -515,7 +515,7 @@ function Lesson0Content() {
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 0 14px" }}>
           <div>
             <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>
-              Jessica Inskip · Level 0
+              Level 0
             </div>
             <div style={{ fontSize:17, fontWeight:800 }}>{LABELS[part]}</div>
           </div>
@@ -594,7 +594,7 @@ function Lesson0Content() {
               <div style={{ fontSize:20, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>{profile.headline}</div>
               <div style={{ fontSize:13, color:profile.color, fontWeight:600, marginBottom:16 }}>{profile.subhead}</div>
 
-              <WBPanel title="Jessica's Whiteboard" color={profile.color}>
+              <WBPanel title="Whiteboard" color={profile.color}>
                 {(play) => <profile.WB play={play} />}
               </WBPanel>
 
@@ -618,7 +618,7 @@ function Lesson0Content() {
                 <div style={{ fontSize:13, color:T.white, lineHeight:1.7, fontStyle:"italic" }}>
                   "{profile.conclusion}"
                 </div>
-                <div style={{ fontSize:11, color:profile.color, marginTop:8, fontWeight:700 }}>— Jessica Inskip</div>
+                <div style={{ fontSize:11, color:profile.color, marginTop:8, fontWeight:700 }}>— Knowvest</div>
               </div>
               <Btn color={profile.color} onClick={() => setPart(2)}>{profile.cta}</Btn>
             </Card>
@@ -776,8 +776,8 @@ function Lesson0Content() {
                 <VRow icon="✗" color={T.red} label="High-interest debt" value={`${debtRate}% — blocks Level 1`} />
                 <VRow icon={cushionOk?"✓":"⚠"} color={cushionOk?T.teal:T.amber} label="Emergency cushion" value={cushionOk?`${monthsCovered.toFixed(1)} mo ✓`:"Still needed"} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.red} style={{ flex:1 }} onClick={() => completeLesson("blocked_debt")}>Learn the strategy</Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}>Preview Level 1</Btn>
+                  <Btn color={T.red} style={{ flex:1 }} onClick={() => completeLesson("blocked_debt")}>Learn the strategy - Go back to lesson</Btn>
+                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}> Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
@@ -805,8 +805,8 @@ function Lesson0Content() {
                 <VRow icon="✓" color={T.teal} label="Debt check" value={hasDebt?`${debtRate}% — clean`:"Debt-free"} />
                 <VRow icon="⚠" color={T.amber} label="Emergency cushion" value={`${monthsCovered.toFixed(1)} of 3 months`} />
                 <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => completeLesson("blocked_no_fund")}>Build my cushion</Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Preview Level 1</Btn>
+                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={() => completeLesson("blocked_no_fund")}>Build my cushion - back to roadmap</Btn>
+                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
