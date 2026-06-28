@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDFVDqRSY3AFRw00aF7uiAo1yXJGHNhA5U",
@@ -17,461 +17,706 @@ const db = getFirestore(firebaseApp);
 
 const T = {
   navy:"#0D1B2A", navyMid:"#152130", navyCard:"#1C2D3F", navyDeep:"#0A1520",
-  teal:"#1D9E75", tealDim:"#0f5c43", amber:"#F5A623", red:"#E8404A",
-  purple:"#A78BFA", blue:"#60A5FA", slate:"#8DA0B3", white:"#F0F4F8", offWhite:"#C8D6E2",
-  oxygen:"#38BDF8", colony:"#1D9E75",
+  teal:"#1D9E75", amber:"#F5A623", red:"#E8404A",
+  purple:"#A78BFA", blue:"#60A5FA", slate:"#8DA0B3",
+  white:"#F0F4F8", offWhite:"#C8D6E2", oxygen:"#38BDF8",
 };
 
-const fmt = (n) => {
-  if (n >= 1000000) return `¥${(n/1000000).toFixed(1)}M`;
-  if (n >= 1000)    return `¥${(n/1000).toFixed(0)}k`;
-  return `¥${Math.round(n).toLocaleString()}`;
-};
-const fmtFull = (n) => `¥${Math.round(n).toLocaleString()}`;
+const yen  = (n) => n >= 1000000 ? "¥" + (n/1000000).toFixed(1) + "M" : n >= 1000 ? "¥" + (n/1000).toFixed(0) + "k" : "¥" + Math.round(n).toLocaleString();
+const yenF = (n) => "¥" + Math.round(n).toLocaleString();
+const c20  = (n) => yenF(Math.round(n * Math.pow(1.07, 20)));
 
-function WB_SpaceStation({ play }) {
-  const bricks = [
-    { x:20,  y:118, w:52, h:16, delay:0.3 },
-    { x:20,  y:100, w:52, h:16, delay:0.5 },
-    { x:20,  y:82,  w:52, h:16, delay:0.7 },
-    { x:20,  y:64,  w:52, h:16, delay:0.9 },
-    { x:20,  y:46,  w:52, h:16, delay:1.1 },
-  ];
-  return (
-    <div style={{ padding:"8px 0" }}>
-      <div style={{ display:"flex", justifyContent:"space-around", marginBottom:10 }}>
-        <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.colony, textTransform:"uppercase", letterSpacing:0.8 }}>🚀 Mars Colony</div>
-          <div style={{ fontSize:10, color:T.slate }}>Growth Engine</div>
-        </div>
-        <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.oxygen, textTransform:"uppercase", letterSpacing:0.8 }}>🛸 Oxygen Tank</div>
-          <div style={{ fontSize:10, color:T.slate }}>Emergency Cash</div>
-        </div>
-      </div>
-      <svg viewBox="0 0 300 155" style={{ width:"100%", overflow:"visible" }}>
-        <rect x="14" y="134" width="66" height="8" rx="2" fill={`${T.colony}40`} stroke={T.colony} strokeWidth="1.5" />
-        {bricks.map((b, i) => (
-          <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx="2" fill={`${T.colony}${i < 3 ? "60" : "35"}`} stroke={T.colony} strokeWidth="1" style={{ opacity: 0, animation: play ? `fadeUp 0.4s ease ${b.delay}s forwards` : "none" }} />
-        ))}
-        {bricks.map((b, i) => (
-          <line key={`m${i}`} x1={b.x+2} y1={b.y+b.h/2} x2={b.x+b.w-2} y2={b.y+b.h/2} stroke={`${T.colony}40`} strokeWidth="0.5" style={{ opacity: 0, animation: play ? `fadeUp 0.4s ease ${b.delay+0.1}s forwards` : "none" }} />
-        ))}
-        <text x="47" y="42" textAnchor="middle" fill={T.colony} fontSize="9" fontWeight="700" style={{ opacity:0, animation: play?"fadeUp 0.4s ease 1.3s forwards":"none" }}>LONG-TERM</text>
-        <text x="47" y="52" textAnchor="middle" fill={T.colony} fontSize="9" style={{ opacity:0, animation: play?"fadeUp 0.4s ease 1.4s forwards":"none" }}>STRUCTURE</text>
-        <line x1="150" y1="20" x2="150" y2="145" stroke={`${T.amber}80`} strokeWidth="1.5" strokeDasharray="4,3" style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.4s forwards":"none" }} />
-        <text x="150" y="16" textAnchor="middle" fill={T.amber} fontSize="8" fontWeight="700" style={{ opacity:0, animation: play?"fadeIn 0.4s ease 0.8s forwards":"none" }}>THE LINE</text>
-        <rect x="218" y="38" width="52" height="90" rx="8" fill="none" stroke={T.oxygen} strokeWidth="2" style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.3s forwards":"none" }} />
-        <rect x="232" y="32" width="24" height="8" rx="3" fill="none" stroke={T.oxygen} strokeWidth="1.5" style={{ opacity:0, animation: play?"fadeIn 0.5s ease 0.3s forwards":"none" }} />
-        <clipPath id="tankClip"><rect x="220" y="40" width="48" height="86" rx="6" /></clipPath>
-        <rect x="220" y="40" width="48" height="86" rx="6" fill={`${T.oxygen}25`} style={{ opacity:0, animation: play?"fadeIn 0.3s ease 0.4s forwards":"none" }} />
-        <rect x="220" y="80" width="48" height="46" rx="0" clipPath="url(#tankClip)" fill={`${T.oxygen}60`} style={{ opacity:0, animation: play?"tankFill 1.2s ease 0.9s forwards":"none" }} />
-        {[0.25, 0.5, 0.75].map((pct, i) => (
-          <line key={i} x1="220" y1={40 + (1-pct)*86} x2="230" y2={40 + (1-pct)*86} stroke={`${T.oxygen}60`} strokeWidth="1" style={{ opacity:0, animation: play?`fadeIn 0.3s ease ${1.2+i*0.1}s forwards`:"none" }} />
-        ))}
-        <text x="244" y="68" textAnchor="middle" fill={T.oxygen} fontSize="14" fontWeight="900" style={{ opacity:0, animation: play?"fadeIn 0.5s ease 1.5s forwards":"none" }}>O₂</text>
-        <text x="244" y="80" textAnchor="middle" fill={T.oxygen} fontSize="8" style={{ opacity:0, animation: play?"fadeIn 0.4s ease 1.6s forwards":"none" }}>3–6 mo</text>
-        <text x="244" y="90" textAnchor="middle" fill={T.oxygen} fontSize="8" style={{ opacity:0, animation: play?"fadeIn 0.4s ease 1.7s forwards":"none" }}>expenses</text>
-        <g style={{ opacity:0, animation: play?"fadeIn 0.6s ease 2.0s forwards":"none" }}>
-          <path d="M47,44 L47,148" stroke={T.red} strokeWidth="1.5" strokeDasharray="3,2" fill="none" />
-          <polygon points="44,148 47,154 50,148" fill={T.red} />
-          <rect x="4" y="154" width="292" height="18" rx="4" fill={`${T.red}20`} stroke={`${T.red}50`} strokeWidth="1" />
-          <text x="150" y="166" textAnchor="middle" fill={T.red} fontSize="9" fontWeight="700">⚠ Forced sell = Paper loss becomes PERMANENT loss</text>
-        </g>
-        <style>{`
-          @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
-          @keyframes fadeUp  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-          @keyframes tankFill { from { transform:scaleY(0); transform-origin:bottom; opacity:0; } to { transform:scaleY(1); transform-origin:bottom; opacity:1; } }
-        `}</style>
-      </svg>
-    </div>
-  );
-}
+const PERSONALITY_QS = [
+  {
+    q: "A ¥50,000 bonus just hit your account. First instinct?",
+    choices: [
+      { label: "Top up my Emergency Fund", icon: "🛸", score: 2 },
+      { label: "Invest it immediately", icon: "🚀", score: 1 },
+      { label: "Treat myself — I earned this", icon: "🛍️", score: 0 }
+    ]
+  },
+  {
+    q: "You find ¥3,000 in an old jacket pocket. What happens to it?",
+    choices: [
+      { label: "Add it to my savings", icon: "🏦", score: 2 },
+      { label: "Leave it in my wallet for later", icon: "👜", score: 1 },
+      { label: "Spend it — it's found money", icon: "🍜", score: 0 }
+    ]
+  },
+  {
+    q: "Your expenses came in ¥20,000 under budget this month. You...",
+    choices: [
+      { label: "Transfer it to Emergency Fund", icon: "🛸", score: 2 },
+      { label: "Let it sit in my bank account", icon: "💤", score: 1 },
+      { label: "Upgrade something I've been eyeing", icon: "🛒", score: 0 }
+    ]
+  }
+];
 
-function WB_ForcedSell({ play, monthsCovered }) {
-  return (
-    <div style={{ padding:"8px 0" }}>
-      <div style={{ fontSize:11, color:T.slate, marginBottom:12, textTransform:"uppercase", letterSpacing:0.8 }}>Same market dip — two different outcomes</div>
-      <div style={{ display:"flex", gap:10 }}>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:10, fontWeight:700, color:T.red, marginBottom:6, textAlign:"center" }}>❌ No Oxygen Tank</div>
-          {[
-            { text:"Market dips 15%", color:T.slate, delay:0.3 },
-            { text:"Emergency hits", color:T.amber, delay:0.6 },
-            { text:"Forced to sell", color:T.red, delay:0.9 },
-            { text:"Loss = permanent", color:T.red, delay:1.2 },
-          ].map((s, i) => (
-            <div key={i} style={{ padding:"6px 8px", borderRadius:6, marginBottom:4, background:`${s.color}18`, border:`1px solid ${s.color}40`, fontSize:11, color:s.color, fontWeight:600, textAlign:"center", opacity:play?1:0, transition:play?`opacity 0.4s ease ${s.delay}s`:"none" }}>{s.text}</div>
-          ))}
-        </div>
-        <div style={{ display:"flex", alignItems:"center", fontSize:11, color:T.slate, fontWeight:700 }}>VS</div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:10, fontWeight:700, color:T.teal, marginBottom:6, textAlign:"center" }}>✅ Full Oxygen Tank</div>
-          {[
-            { text:"Market dips 15%", color:T.slate, delay:0.4 },
-            { text:"Emergency hits", color:T.amber, delay:0.7 },
-            { text:"Use HYSA cash", color:T.teal, delay:1.0 },
-            { text:"Investments untouched", color:T.teal, delay:1.3 },
-          ].map((s, i) => (
-            <div key={i} style={{ padding:"6px 8px", borderRadius:6, marginBottom:4, background:`${s.color}18`, border:`1px solid ${s.color}40`, fontSize:11, color:s.color, fontWeight:600, textAlign:"center", opacity:play?1:0, transition:play?`opacity 0.4s ease ${s.delay}s`:"none" }}>{s.text}</div>
-          ))}
-        </div>
-      </div>
-      <div style={{ marginTop:12, padding:"10px 12px", background:T.navyDeep, borderRadius:8, fontSize:12, color:T.offWhite, lineHeight:1.5, opacity:play?1:0, transition:play?"opacity 0.5s ease 1.8s":"none" }}>
-        The market dip was identical. The outcome was decided <span style={{ color:T.amber, fontWeight:700 }}>before the dip even happened.</span>
-      </div>
-    </div>
-  );
-}
+const PERSONALITIES = [
+  { id: "architect", minScore: 5, icon: "🏛️", title: "The Architect", desc: "Your saving instinct is structural. You treat surplus money as a resource to deploy, not a reward to spend. This is the foundation of long-term wealth.", rate: 0.20, bonus: 200000, color: T.teal, bonusLabel: "Tank Bonus: +¥200,000" },
+  { id: "builder", minScore: 3, icon: "🔧", title: "The Builder", desc: "You have the instinct but one blind spot lets spending creep in. The habit is forming — you just need a hard rule to close the gap.", rate: 0.15, bonus: 100000, color: T.blue, bonusLabel: "Tank Bonus: +¥100,000" },
+  { id: "grower", minScore: 0, icon: "🌱", title: "The Grower", desc: "The saving habit isn't automatic yet — and that's exactly why you're here. The simulator will show you what building it looks like in practice.", rate: 0.08, bonus: 0, color: T.amber, bonusLabel: "No bonus — base tank only" }
+];
 
-function WBPanel({ title, color, children }) {
-  const [play, setPlay] = useState(false);
-  const [played, setPlayed] = useState(false);
-  const toggle = () => {
-    setPlay(false);
-    setTimeout(() => { setPlay(true); setPlayed(true); }, 60);
-  };
-  return (
-    <div style={{ background:T.navyDeep, border:`1px solid ${color}35`, borderRadius:14, padding:"14px 16px", marginBottom:16 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontSize:11, fontWeight:700, color, textTransform:"uppercase", letterSpacing:1 }}>📋 {title}</div>
-        <button onClick={toggle} style={{ background:`${color}20`, border:`1px solid ${color}50`, borderRadius:20, padding:"4px 14px", color, fontSize:11, fontWeight:700, cursor:"pointer" }}>{!played ? "▶ Draw it" : "↺ Replay"}</button>
-      </div>
-      {typeof children === "function" ? children(play) : children}
-    </div>
-  );
-}
+const getPersonality = (score) => PERSONALITIES.find(p => score >= p.minScore) || PERSONALITIES[2];
+const TIME_GAPS = [0, 2, 4, 1, 3, 2, 5, 8, 3, 6];
 
-function Lesson11Content() {
+const EVENTS = [
+  {
+    id: 1,
+    icon: "🚗",
+    tag: "Universal",
+    tagColor: T.slate,
+    title: "Car Breakdown",
+    story: "You're driving to work Monday morning when your car dies on the expressway. Transmission failure. The mechanic needs payment today.",
+    bill: 180000,
+    billLabel: "Repair bill",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Exactly right. This is what the Emergency Fund is for. Colony untouched and still compounding." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "¥180,000 withdrawn from the colony today costs you " + c20(180000) + " in 20-year compounding. The colony doesn't get torn down for a car repair." },
+      { label: "Put it on a credit card", icon: "💳", correct: false, explain: "Credit card interest at 18% adds ¥32,000 in year one alone. You'd be rebuilding a debt boss you already defeated in Level 0." }
+    ],
+    jessica: "The oxygen tank exists for exactly this moment. Car repairs, dentist bills — everyday emergencies your fund absorbs silently."
+  },
+  {
+    id: 2,
+    icon: "🦷",
+    tag: "Universal",
+    tagColor: T.slate,
+    title: "Emergency Root Canal",
+    story: "Sharp tooth pain hits Friday night. By Saturday you need an emergency root canal plus a crown. The clinic wants payment upfront.",
+    bill: 95000,
+    billLabel: "Dental bill",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Perfect. Health emergencies always take priority — and your colony didn't lose a single brick." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "¥95,000 from the colony costs you " + c20(95000) + " over 20 years. Health emergencies are exactly what the tank is for." },
+      { label: "Delay treatment to save up", icon: "⏳", correct: false, explain: "Delaying dental care turns a ¥95,000 problem into a ¥300,000+ extraction and implant — plus time off work. The tank exists so you never delay a health decision because of money." }
+    ],
+    jessica: "Medical emergencies feel urgent. That's exactly why you build the tank in advance — so when it hits, the decision is already made."
+  },
+  {
+    id: 3,
+    icon: "🚙",
+    tag: "Japan — Shakken",
+    tagColor: T.amber,
+    title: "Shakken Due (車検)",
+    story: "Your mandatory biennial car inspection is due this month. New brakes, tires, and inspection fees. Legally required — no skipping it.",
+    bill: 120000,
+    billLabel: "Shakken + repairs",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Good. Shakken is predictable — every 2 years. Your Emergency Fund covers it cleanly. Ideally it has its own sinking fund over time." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "Shakken is a known, recurring expense. Selling colony bricks for something this predictable is a sequencing error that costs you " + c20(120000) + " over 20 years." },
+      { label: "Skip it and keep driving", icon: "🚫", correct: false, explain: "Driving without a valid shakken is illegal in Japan. Your insurance becomes void and fines can exceed the inspection cost itself. There is no skipping this one." }
+    ],
+    jessica: "Japan has uniquely large predictable expenses — shakken, residence tax, health insurance adjustments. These should have their own sinking fund over time."
+  },
+  {
+    id: 4,
+    icon: "📉",
+    tag: "Market Event",
+    tagColor: T.blue,
+    title: "Market Drops 18%",
+    story: "Your portfolio is down ¥340,000 from last month. Financial news is screaming 'crash incoming.' Everyone on social media is panic selling.",
+    bill: null,
+    billLabel: null,
+    isMarket: true,
+    choices: [
+      { label: "Do nothing — stay the course", icon: "🧘", correct: true, explain: "This is the rule. An 18% dip is a normal quarterly chapter. Your oxygen tank means you don't need to sell. History shows it always recovers." },
+      { label: "Sell now to stop the bleeding", icon: "📉", correct: false, explain: "Selling during a dip converts a temporary paper loss into a permanent capital loss. Every single historical dip has recovered. You just need to not need the money right now — which is exactly why the tank exists." },
+      { label: "Wait for the bottom, then rebuy", icon: "⏳", correct: false, explain: "Nobody has ever reliably timed the bottom — not retail investors, not hedge funds. Studies show missing just the 10 best market days in a decade cuts returns in half. The rule is simple: do nothing." }
+    ],
+    jessica: "This is exactly why we built the oxygen tank first. Because you don't need that money — you do nothing. The colony keeps building."
+  },
+  {
+    id: 5,
+    icon: "✈️",
+    tag: "Universal",
+    tagColor: T.slate,
+    title: "Family Emergency Flight",
+    story: "A 2am call. A family member is seriously ill and you need to fly back home immediately. One-way flight, hotel, two weeks off work.",
+    bill: 280000,
+    billLabel: "Travel + lost wages",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Right. Emotional emergencies are still emergencies. Your oxygen tank absorbs this. You focus on family — not finances." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "¥280,000 from the colony costs " + c20(280000) + " over 20 years. Your tank exists so money never competes with family in your worst moments." },
+      { label: "Take a personal loan", icon: "FIN", correct: false, explain: "A personal loan at 5–8% adds financial stress on top of emotional stress — and creates a new debt obligation right when your income may already be disrupted by time off work." }
+    ],
+    jessica: "The most important thing the oxygen tank does is remove financial decisions from emotional moments. When family calls, money should never be the question."
+  },
+  {
+    id: 6,
+    icon: "💼",
+    tag: "Universal",
+    tagColor: T.slate,
+    title: "Job Loss — 2 Months",
+    story: "Your company announces restructuring. Your position is eliminated. One month severance. You need 2 months of expenses while job hunting.",
+    bill: null,
+    billLabel: null,
+    isMarket: false,
+    isDynamic: true,
+    dynamicBillFn: (expenses) => expenses * 2,
+    dynamicLabel: "2 months living expenses",
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "This is the core use case. Job loss is the #1 reason you built 3–6 months of emergency cash. Colony stays untouched and keeps compounding." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "Job losses and market downturns are correlated — they often happen simultaneously. Selling your colony during a downturn means selling at the lowest point. That's double damage you can never undo." },
+      { label: "Max out credit cards", icon: "💳", correct: false, explain: "Credit card debt at 18% on 2 months of expenses costs tens of thousands per year in interest. You'd be rebuilding the exact debt boss from Level 0 at the worst possible time." }
+    ],
+    jessica: "Job loss and market downturns are correlated. Without the oxygen tank, you sell your colony at rock bottom to survive. With it, you hold through the dip."
+  },
+  {
+    id: 7,
+    icon: "🏠",
+    tag: "Universal",
+    tagColor: T.slate,
+    title: "Apartment Deposit",
+    story: "Your landlord isn't renewing your lease. New place found — first month, last month, and security deposit all due in 3 weeks.",
+    bill: 350000,
+    billLabel: "Deposit + first/last month",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Correct — though note: moving costs are predictable. Ideally they have their own sinking fund. Emergency Fund covers it for now, but plan ahead for next time." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "¥350,000 from the colony costs " + c20(350000) + " over 20 years. Moving costs are predictable enough to plan for — they belong in a sinking fund, not funded by colony bricks." },
+      { label: "Borrow from family", icon: "👨‍👩‍👦", correct: false, explain: "Borrowing from family adds relationship risk to financial stress. When repayment gets delayed — and it often does — it creates tension that outlasts the financial problem itself." }
+    ],
+    jessica: "Some expenses are predictable enough for a separate sinking fund — moving, travel, big purchases. This keeps your Emergency Fund reserved for true surprises."
+  },
+  {
+    id: 8,
+    icon: "📊",
+    tag: "Japan — Tax Season",
+    tagColor: T.amber,
+    title: "Tax Underpayment Surprise",
+    story: "It's June. Your city tax bill arrives ¥85,000 higher than expected — a common shock for expats in Japan. Due in 3 weeks.",
+    bill: 85000,
+    billLabel: "Tax underpayment",
+    isMarket: false,
+    choices: [
+      { label: "Use my Emergency Fund", icon: "🛸", correct: true, needsTank: true, explain: "Right call. Tax surprises in Japan are common for expats — especially the first few years. Emergency Fund absorbs this in 24 hours. Colony intact." },
+      { label: "Sell some investments", icon: "🚀", correct: false, explain: "¥85,000 from the colony costs " + c20(85000) + " over 20 years. This is a classic oxygen-tank-sized expense — small enough to feel manageable, but the compounding cost is real." },
+      { label: "Request a payment extension", icon: "📋", correct: false, explain: "Japan's tax office expects on-time payment. Extensions can trigger penalties and interest that exceed the original underpayment amount. Your tank handles this cleanly." }
+    ],
+    jessica: "Japan's tax system can be opaque for expats. Residence tax, health insurance adjustments arrive as lump sums. Build awareness of these into your annual financial calendar."
+  },
+  {
+    id: 9,
+    icon: "🚀",
+    tag: "Market Event",
+    tagColor: T.blue,
+    title: "Market Surges 22% — Chase It?",
+    story: "Your portfolio is up ¥420,000 this quarter. A colleague moved his entire Emergency Fund into stocks and made a killing. You feel left behind.",
+    bill: null,
+    billLabel: null,
+    isMarket: true,
+    isGreed: true,
+    choices: [
+      { label: "Do nothing — protect the rule", icon: "🧘", correct: true, explain: "Discipline wins. Your colony is already up 22%. Moving the oxygen tank into the market means the next emergency destroys the colony instead of being absorbed by the tank." },
+      { label: "Move Emergency Fund into market", icon: "📈", correct: false, explain: "The moment your tank is empty, every future emergency becomes a forced colony sell. One medical bill, one job shock — and you're selling investments at whatever price the market offers that day." },
+      { label: "Take a loan to invest more", icon: "💸", correct: false, explain: "Leveraged investing amplifies losses as much as gains. A 22% gain on borrowed money feels incredible. A 22% loss on borrowed money means you owe more than your portfolio is worth." }
+    ],
+    jessica: "The greed trap is the mirror of the fear trap. Both lead to the same mistake — breaking the rule. Ask your colleague what happens when the market drops 20% and his emergency fund is gone."
+  },
+  {
+    id: 10,
+    icon: "🌊",
+    tag: "Final Event — Japan",
+    tagColor: T.red,
+    title: "Typhoon Damages Your Home",
+    story: "A powerful typhoon hits. Ceiling collapse, ruined belongings, 3 months of temporary housing needed. Your renter's insurance has a gap and won't cover the full amount.",
+    bill: 1200000,
+    billLabel: "Repairs + temporary housing",
+    isMarket: false,
+    isBoss: true,
+    choices: [
+      { label: "Emergency Fund + don't sell investments", icon: "🛸", correct: true, needsTank: true, explain: "Right instinct. Your Emergency Fund covers what it can. The investments stay untouched — even here. The gap between your tank and this bill is exactly what Level 4 is about." },
+      { label: "Sell investments to cover the gap", icon: "🚀", correct: false, explain: "Even at ¥1.2M, selling the colony is not the answer. The gap between your tank and this bill is what income protection insurance exists to cover — which is exactly what Level 4 teaches." },
+      { label: "Take a large personal loan", icon: "🏦", correct: false, explain: "A large loan at your most financially vulnerable moment creates a debt burden right when your income may be disrupted by displacement. This is insurance territory — not loan territory." }
+    ],
+    jessica: ""
+  }
+];
+
+function QuizContent() {
   const searchParams = useSearchParams();
   const urlUid = searchParams.get("uid");
   const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
+
+  const [screen, setScreen]           = useState("partA");
+  const [pqIdx, setPqIdx]             = useState(0);
+  const [pScore, setPScore]           = useState(0);
+  const [pChosen, setPChosen]         = useState(null);
+  const [personality, setPersonality] = useState(null);
+  const [income, setIncome]           = useState(350000);
+  const [expenses, setExpenses]       = useState(200000);
+  const [idx, setIdx]                 = useState(0);
+  const [lives, setLives]             = useState(3);
+  const [score, setScore]             = useState(0);
+  const [tank, setTank]               = useState(0);
+  const [startTank, setStartTank]     = useState(0);
+  const [chosen, setChosen]           = useState(null);
+  const [history, setHistory]         = useState([]);
+  const [gameOver, setGameOver]       = useState(false);
+  const [showTimestamp, setShowTimestamp] = useState(true);
+  const [monthsElapsed, setMonthsElapsed] = useState(0);
+  const [existingAttempts, setExistingAttempts] = useState(0);
 
   useEffect(() => {
     if (urlUid && typeof window !== "undefined") {
       sessionStorage.setItem("knowvest_uid", urlUid);
     }
-  }, [urlUid]);
+    if (uid) {
+      const ref = doc(db, "users", uid, "progress", "summary");
+      getDoc(ref).then(snap => {
+        if (snap.exists() && snap.data().lesson_1_1) {
+          setExistingAttempts(snap.data().lesson_1_1.attempts || 0);
+        }
+      }).catch(e => console.error(e));
+    }
+  }, [urlUid, uid]);
 
-  const [part, setPart]           = useState(0);
-  const [expenses, setExpenses]   = useState(200000);
-  const [currentCash, setCurrentCash] = useState(600000);
-  const [monthsTarget, setMonthsTarget] = useState(3);
-  const topRef = useRef(null);
+  const ev     = EVENTS[idx];
+  const isLast = idx === EVENTS.length - 1;
+  const tankEmpty = tank <= 0;
+  const evBill      = ev.isDynamic ? ev.dynamicBillFn(expenses) : ev.bill;
+  const evBillLabel = ev.isDynamic ? ev.dynamicLabel : ev.billLabel;
 
-  const oxygenTarget   = expenses * monthsTarget;
-  const deployable     = Math.max(0, currentCash - oxygenTarget);
-  const cushionMonths  = currentCash / Math.max(expenses, 1);
-  const oxygenFull     = cushionMonths >= monthsTarget;
-  const oxygenPct      = Math.min(100, (currentCash / Math.max(oxygenTarget, 1)) * 100);
-  const shortfall      = Math.max(0, oxygenTarget - currentCash);
+  const pickPQ = (choice) => {
+    if (pChosen) return;
+    setPChosen(choice);
+  };
 
-  useEffect(() => { topRef.current?.scrollIntoView({ behavior:"smooth" }); }, [part]);
+  const nextPQ = () => {
+    const newScore = pScore + (pChosen ? pChosen.score : 0);
+    if (pqIdx < PERSONALITY_QS.length - 1) {
+      setPScore(newScore);
+      setPqIdx(i => i + 1);
+      setPChosen(null);
+    } else {
+      setPersonality(getPersonality(newScore));
+      setPScore(newScore);
+      setScreen("personality");
+    }
+  };
 
-  async function triggerQuizNavigation() {
+  const startSim = () => {
+    const baseTank = expenses * 3 + personality.bonus;
+    setTank(baseTank);
+    setStartTank(baseTank);
+    setShowTimestamp(TIME_GAPS[0] > 0);
+    setMonthsElapsed(0);
+    setScreen("sim");
+  };
+
+  const dismissTimestamp = () => {
+    const gap = TIME_GAPS[idx];
+    const monthlySavings = Math.round(income * personality.rate);
+    const refill = gap * monthlySavings;
+    setTank(t => Math.min(startTank, t + refill));
+    setMonthsElapsed(m => m + gap);
+    setShowTimestamp(false);
+  };
+
+  const pick = (choice) => {
+    if (chosen || showTimestamp) return;
+    if (choice.needsTank && tankEmpty) return;
+    const isCorrect = choice.correct;
+    const newLives  = isCorrect ? lives : lives - 1;
+    const newScore  = isCorrect ? score + 1 : score;
+    const newTank   = (isCorrect && evBill) ? Math.max(0, tank - evBill) : tank;
+    setChosen(choice);
+    setScore(newScore);
+    setTank(newTank);
+    if (!isCorrect) setLives(newLives);
+    setHistory(h => [...h, { icon:ev.icon, title:ev.title, correct:isCorrect, label:choice.label }]);
+    if (!isCorrect && newLives <= 0) {
+      setGameOver(true);
+      saveQuizOutcome(false, newScore);
+    }
+  };
+
+  const next = () => {
+    if (gameOver || isLast) { 
+      const passed = lives > 0 && score + (chosen?.correct ? 0 : 0) >= 7;
+      saveQuizOutcome(passed, score);
+      setScreen("result"); 
+      return; 
+    }
+    const nextIdx = idx + 1;
+    setIdx(nextIdx);
+    setChosen(null);
+    setShowTimestamp(TIME_GAPS[nextIdx] > 0);
+  };
+
+  async function saveQuizOutcome(passed, finalScore) {
     if (!uid) return;
     try {
       const ref = doc(db, "users", uid, "progress", "summary");
-      await setDoc(ref, {
+      const nextAttempts = existingAttempts + 1;
+      
+      const update = {
         lesson_1_1: {
-          status: "inprogress"
+          status: passed ? "complete" : "failed",
+          quizPassed: passed,
+          attempts: nextAttempts,
+          lastScore: `${finalScore}/10`,
+          completedAt: serverTimestamp()
         }
-      }, { merge: true });
+      };
+
+      if (passed) {
+        update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
+      }
+
+      await setDoc(ref, update, { merge: true });
+      setExistingAttempts(nextAttempts);
     } catch (e) {
-      console.error(e);
+      console.error("Firestore database update failure:", e);
     }
-    window.location.href = `https://project-0d07n.vercel.app/lesson-1-1-quiz.html?uid=${uid}`;
   }
 
-  const LABELS = ["The Fear","The Analogy","The Rule","Your Numbers","Your Verdict"];
+  function routeToDashboard() {
+    window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
+  }
 
-  return (
-    <div ref={topRef} style={{ minHeight:"100vh", background:T.navy, fontFamily:"'Inter', system-ui, sans-serif", color:T.white, padding:"0 16px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
-      <div style={{ width:"100%", maxWidth:480 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 0 14px" }}>
-          <div>
-            <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>Level 1 · Lesson 1-1</div>
-            <div style={{ fontSize:17, fontWeight:800 }}>{LABELS[part]}</div>
+  if (screen === "partA") {
+    const q = PERSONALITY_QS[pqIdx];
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <div style={{ fontSize:10, color:T.slate, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Lesson 1-1 · Before We Begin</div>
+          <div style={{ fontSize:18, fontWeight:800 }}>Saving Instinct Check</div>
+        </div>
+        <div style={{ display:"flex", gap:5, marginBottom:16 }}>
+          {PERSONALITY_QS.map((_,i) => (
+            <div key={i} style={{ flex:1, height:4, borderRadius:2, background: i < pqIdx ? T.teal : i === pqIdx ? T.slate : T.navyCard }} />
+          ))}
+        </div>
+        <Box>
+          <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:10 }}>Question {pqIdx+1} of 3</div>
+          <div style={{ fontSize:18, fontWeight:800, lineHeight:1.35, marginBottom:18 }}>{q.q}</div>
+          {q.choices.map((c,i) => {
+            const isPicked = pChosen && pChosen.label === c.label;
+            return (
+              <button key={i} onClick={() => pickPQ(c)} disabled={!!pChosen} style={{ width:"100%", background: isPicked ? T.teal + "25" : T.navyDeep, border:"2px solid " + (isPicked ? T.teal : T.navyMid), borderRadius:12, padding:"13px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10, cursor: pChosen ? "default" : "pointer", textAlign:"left", transition:"all 0.2s" }}>
+                <span style={{ fontSize:20 }}>{c.icon}</span>
+                <span style={{ fontSize:13, color:T.white, fontWeight:600 }}>{c.label}</span>
+              </button>
+            );
+          })}
+          {pChosen && <Btn color={T.teal} onClick={nextPQ}>{pqIdx < PERSONALITY_QS.length - 1 ? "Next Question →" : "See My Saving Profile →"}</Btn>}
+        </Box>
+      </Wrap>
+    );
+  }
+
+  if (screen === "personality") {
+    const p = personality;
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <div style={{ fontSize:10, color:T.slate, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Your Saving Profile</div>
+          <div style={{ fontSize:18, fontWeight:800 }}>The Result</div>
+        </div>
+        <Box borderColor={p.color}>
+          <div style={{ textAlign:"center", padding:"12px 0 18px" }}>
+            <div style={{ fontSize:52, marginBottom:10 }}>{p.icon}</div>
+            <div style={{ fontSize:22, fontWeight:900, color:p.color, marginBottom:6 }}>{p.title}</div>
+            <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7, maxWidth:300, margin:"0 auto" }}>{p.desc}</div>
           </div>
-          <div style={{ display:"flex", gap:5 }}>
-            {LABELS.map((_,i) => (
-              <div key={i} style={{ height:4, width:i===part?22:8, borderRadius:2, background:i<part?T.teal:i===part?T.oxygen:T.navyCard, transition:"all 0.4s" }} />
+          <div style={{ background:T.navy, borderRadius:12, padding:"14px 16px", marginBottom:14 }}>
+            {[
+              ["Monthly savings rate", Math.round(p.rate*100) + "% of income", p.color],
+              ["Tank bonus", p.bonus > 0 ? "+" + yen(p.bonus) : "None", p.bonus > 0 ? T.teal : T.slate],
+            ].map(([label, val, color], i) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < 1 ? "1px solid " + T.navyMid : "none" }}>
+                <span style={{ fontSize:12, color:T.slate }}>{label}</span>
+                <span style={{ fontSize:14, fontWeight:900, color }}>{val}</span>
+              </div>
             ))}
           </div>
-        </div>
-
-        <div style={{ display:"flex", alignItems:"center", gap:10, background:T.navyCard, borderRadius:12, padding:"10px 14px", marginBottom:14, border:`1px solid ${T.navyMid}` }}>
-          <span style={{ fontSize:22 }}>🛸</span>
-          <div>
-            <div style={{ fontSize:11, color:T.oxygen, fontWeight:700, textTransform:"uppercase", letterSpacing:1 }}>The Liquidity Line</div>
-            <div style={{ fontSize:12, color:T.slate }}>Separating your Oxygen Tank from your Growth Engine</div>
+          <div style={{ background:p.color + "12", border:"1px solid " + p.color + "40", borderRadius:12, padding:"12px 14px", marginBottom:14 }}>
+            <div style={{ fontSize:12, color:T.offWhite, lineHeight:1.65 }}>Your saving personality determines how fast your Emergency Fund refills between life events. The stronger your saving instinct, the more resilient your tank.</div>
           </div>
+          <Btn color={p.color} onClick={() => setScreen("partB")}>Set Up My Numbers →</Btn>
+        </Box>
+      </Wrap>
+    );
+  }
+
+  if (screen === "partB") {
+    const monthlySavings = Math.round(income * personality.rate);
+    const baseTank = expenses * 3 + personality.bonus;
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <div style={{ fontSize:10, color:T.slate, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Lesson 1-1 · Setup</div>
+          <div style={{ fontSize:18, fontWeight:800 }}>Your Numbers</div>
         </div>
-
-        {part === 0 && (
-          <Fade>
-            <Card borderColor={T.red}>
-              <Pill color={T.red}>The Block We're Solving</Pill>
-              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:10 }}>"What if I invest today and need the money next month?"</div>
-              <div style={{ background:T.navy, borderRadius:12, padding:"14px 16px", marginBottom:16, borderLeft:`3px solid ${T.red}` }}>
-                <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.75 }}>
-                  You've cleared Level 0. Your debt is clean, your baseline cash is real.<br /><br />
-                  But right now, there's one fear keeping your finger off the buy button:<br /><br />
-                  <span style={{ fontSize:16, fontWeight:800, color:T.red }}>"What if I get trapped?"</span><br /><br />
-                  Car breaks down. Dentist bill. Job shock. If your money is locked in the market during a dip — are you going to be forced to sell at a loss just to survive?
-                </div>
+        <Box>
+          <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.65, marginBottom:18 }}>Your simulation is personalised. Set your monthly income and expenses — your Emergency Fund and refill rate are calculated from your real numbers.</div>
+          <SliderField label="Monthly take-home income" value={income} onChange={setIncome} min={150000} max={1000000} step={10000} display={yen(income)} color={T.teal} />
+          <SliderField label="Monthly living expenses" value={expenses} onChange={setExpenses} min={80000} max={600000} step={10000} display={yen(expenses)} color={T.slate} />
+          <div style={{ background:T.navyDeep, borderRadius:12, padding:"14px 16px", marginBottom:14 }}>
+            <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:0.8, marginBottom:12 }}>Your simulation parameters</div>
+            {[
+              ["🛸", "Starting Emergency Fund", yenF(baseTank), T.oxygen],
+              ["📅", "Coverage", (baseTank/Math.max(expenses,1)).toFixed(1) + " months", T.teal],
+              ["💰", "Monthly savings (" + Math.round(personality.rate*100) + "% — " + personality.title + ")", yen(monthlySavings) + "/mo", personality.color],
+              ["🎁", "Personality bonus", personality.bonus > 0 ? "+" + yen(personality.bonus) : "None", personality.bonus > 0 ? T.teal : T.slate],
+            ].map(([icon, label, val, color], i) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"7px 0", borderBottom: i < 3 ? "1px solid " + T.navyMid : "none" }}>
+                <span style={{ fontSize:11, color:T.slate }}>{icon} {label}</span>
+                <span style={{ fontSize:13, fontWeight:800, color }}>{val}</span>
               </div>
-              <div style={{ background:`${T.teal}15`, border:`1px solid ${T.teal}40`, borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:T.teal, marginBottom:6 }}>Jessica's answer:</div>
-                <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7 }}>You don't guess. You draw a hard, mathematical line between two completely separate buckets of money — and you never, ever mix them up.</div>
-              </div>
-              <Btn color={T.oxygen} onClick={() => setPart(1)}>Show me the line →</Btn>
-            </Card>
-          </Fade>
-        )}
+            ))}
+          </div>
+          <Btn color={T.teal} onClick={startSim}>Launch Mission →</Btn>
+        </Box>
+      </Wrap>
+    );
+  }
 
-        {part === 1 && (
-          <Fade>
-            <Card borderColor={T.oxygen}>
-              <Pill color={T.oxygen}>The Analogy</Pill>
-              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>The Mars Colony & The Oxygen Tank</div>
-              <div style={{ fontSize:13, color:T.oxygen, fontWeight:600, marginBottom:16 }}>Your investments are the colony. Your emergency cash is the spacesuit.</div>
-              <WBPanel title="Jessica's Whiteboard" color={T.oxygen}>{(play) => <WB_SpaceStation play={play} />}</WBPanel>
+  if (screen === "result") {
+    const won     = lives > 0 && score >= 7;
+    const partial = lives > 0 && score >= 5;
+    const verdictColor = won ? T.teal : partial ? T.amber : T.red;
+    const verdictIcon  = won ? "🏆" : partial ? "🛸" : "💥";
+    const verdictTitle = won ? "Colony Survived!" : partial ? "Colony Damaged" : "Colony Collapsed";
+    const verdictMsg   = won
+      ? "You protected the oxygen tank, held through every market event, and never touched the colony. This is the discipline that builds long-term wealth."
+      : partial
+      ? "You understand the concept — but a few bucket mix-ups put the colony at risk. Review the events below."
+      : "The colony collapsed. Every mistake has a real-world cost. The good news: you made them here, not out there. Run it again.";
+    return (
+      <Wrap>
+        <Box borderColor={verdictColor}>
+          <div style={{ textAlign:"center", padding:"8px 0 16px" }}>
+            <div style={{ fontSize:52 }}>{verdictIcon}</div>
+            <div style={{ fontSize:22, fontWeight:900, color:verdictColor, margin:"8px 0 6px" }}>{verdictTitle}</div>
+            <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6, marginBottom:14 }}>{verdictMsg}</div>
+            <div style={{ background:T.navy, borderRadius:"50%", width:80, height:80, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", border:"3px solid " + verdictColor, margin:"0 auto 12px" }}>
+              <div style={{ fontSize:22, fontWeight:900, color:verdictColor }}>{score}/10</div>
+              <div style={{ fontSize:10, color:T.slate }}>correct</div>
+            </div>
+            <div>{[1,2,3].map(i => <span key={i} style={{ fontSize:18 }}>{i <= lives ? "❤️" : "🖤"}</span>)}</div>
+            <div style={{ fontSize:12, color:T.slate, marginTop:6 }}>Simulated {monthLabel(monthsElapsed)} of life</div>
+          </div>
+        </Box>
+        <Box>
+          <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:12 }}>Mission Debrief</div>
+          {history.map((h,i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid " + T.navyMid }}>
+              <span style={{ fontSize:18 }}>{h.icon}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12, fontWeight:700 }}>{h.title}</div>
+                <div style={{ fontSize:11, color:T.slate }}>{h.label}</div>
+              </div>
+              <span style={{ fontSize:16 }}>{h.correct ? "✅" : "❌"}</span>
+            </div>
+          ))}
+        </Box>
+        <div style={{ display:"flex", gap:10 }}>
+          <Btn color={T.amber} style={{ flex:1 }} onClick={() => {
+            setIdx(0); setLives(3); setScore(0); setChosen(null); setHistory([]); setGameOver(false); setShowTimestamp(true); setMonthsElapsed(0);
+            const baseTank = expenses * 3 + personality.bonus; setTank(baseTank); setScreen("sim");
+          }}>🔄 Retry Quiz</Btn>
+          <Btn color={T.teal} style={{ flex:1 }} onClick={routeToDashboard}>Return to Dashboard →</Btn>
+        </div>
+      </Wrap>
+    );
+  }
+
+  const evBorderColor = ev.isBoss ? T.red : ev.isMarket ? T.blue : ev.isGreed ? T.amber : T.navyMid;
+
+  return (
+    <Wrap>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"16px 0 10px" }}>
+        <div style={{ fontSize:10, color:T.slate, letterSpacing:1.5, textTransform:"uppercase" }}>Event {idx+1} of 10</div>
+        <div>{[1,2,3].map(i => <span key={i} style={{ fontSize:16 }}>{i <= lives ? "❤️" : "🖤"}</span>)}</div>
+      </div>
+      <div style={{ background:T.navyCard, borderRadius:4, height:6, marginBottom:12, overflow:"hidden" }}>
+        <div style={{ height:"100%", borderRadius:4, background:T.teal, width:(idx/10*100) + "%", transition:"width 0.4s" }} />
+      </div>
+      <div style={{ display:"flex", gap:10, marginBottom:14 }}>
+        <div style={{ flex:2, background:T.navyCard, borderRadius:10, padding:"10px 12px", border:"1px solid " + T.navyMid }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+            <span style={{ fontSize:10, color:T.slate }}>🛸 Oxygen Tank</span>
+            <span style={{ fontSize:12, fontWeight:800, color: tankEmpty ? T.red : tank > startTank*0.3 ? T.oxygen : T.amber }}>{tankEmpty ? "EMPTY" : yen(tank)}</span>
+          </div>
+          <div style={{ background:T.navy, borderRadius:3, height:5, overflow:"hidden" }}>
+            <div style={{ height:"100%", borderRadius:3, background: tankEmpty ? T.red : tank > startTank*0.3 ? T.oxygen : T.amber, width: Math.min(100,(tank/Math.max(startTank,1))*100) + "%", transition:"width 0.5s" }} />
+          </div>
+          {tankEmpty && <div style={{ fontSize:10, color:T.red, marginTop:3, fontWeight:700 }}>⚠ Tank empty — Emergency Fund locked</div>}
+        </div>
+        <div style={{ flex:1, background:T.navyCard, borderRadius:10, padding:"10px", textAlign:"center", border:"1px solid " + T.navyMid }}>
+          <div style={{ fontSize:10, color:T.slate }}>Score</div>
+          <div style={{ fontSize:18, fontWeight:900, color:T.teal }}>{score}/10</div>
+        </div>
+      </div>
+
+      {showTimestamp && !gameOver && (
+        <Box borderColor={T.teal}>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:36, marginBottom:8 }}>⏱</div>
+            <div style={{ fontSize:13, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:4 }}>Time passes...</div>
+            <div style={{ fontSize:26, fontWeight:900, color:T.teal, marginBottom:4 }}>{monthLabel(gap)} later</div>
+            <div style={{ fontSize:12, color:T.slate, marginBottom:16 }}>Month {monthsElapsed + gap} of your simulation</div>
+            <div style={{ background:T.navy, borderRadius:12, padding:"14px", marginBottom:14 }}>
+              <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:0.8, marginBottom:10 }}>While time passed...</div>
               {[
-                { icon:"🧱", title:"The Mars Colony = Your Growth Engine", body:"Your index funds and portfolio are the structural bricks of your long-term wealth. They are built to stay in place for decades. Every time you pull a brick out of the wall to pay for an emergency, you damage the structure — and worse, you might be pulling it out right when the market is at its lowest.", color: T.colony },
-                { icon:"🛸", title:"The Oxygen Tank = Your Emergency Cash", body:"Your liquid HYSA cash is the oxygen attached directly to your spacesuit. Its only job is to keep you alive during a short-term emergency. It doesn't make you rich. It keeps you safe — so your colony never has to be torn down.", color: T.oxygen }
-              ].map((item, i) => (
-                <div key={i} style={{ background:T.navy, borderRadius:12, padding:"14px 16px", marginBottom:12, borderLeft:`3px solid ${item.color}` }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <span style={{ fontSize:20 }}>{item.icon}</span>
-                    <div style={{ fontSize:13, fontWeight:700, color:item.color }}>{item.title}</div>
-                  </div>
-                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7 }}>{item.body}</div>
+                ["Monthly savings (" + Math.round(personality.rate*100) + "% rate)", yen(monthlySavings) + "/mo", T.teal],
+                ["Months passed", "× " + gap, T.teal],
+              ].map(([label, val, color], i) => (
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom: i < 1 ? "1px solid " + T.navyMid : "none" }}>
+                  <span style={{ fontSize:12, color:T.offWhite }}>{label}</span>
+                  <span style={{ fontSize:13, fontWeight:700, color }}>{val}</span>
                 </div>
               ))}
-              <div style={{ background:`${T.amber}12`, border:`1px solid ${T.amber}40`, borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:T.amber, marginBottom:6 }}>The critical insight:</div>
-                <div style={{ fontSize:13, color:T.white, lineHeight:1.7 }}>A temporary 15% market dip is completely normal. If you're forced to sell during that dip because you have no oxygen tank — you just turned a <span style={{ color:T.amber, fontWeight:700 }}>temporary paper loss</span> into a <span style={{ color:T.red, fontWeight:700 }}>permanent capital loss.</span> Wall Street wins. You lose.</div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:T.offWhite }}>Tank refill</span>
+                <span style={{ fontSize:16, fontWeight:900, color:T.teal }}>+{yen(refill)}</span>
               </div>
-              <WBPanel title="Same Dip — Two Outcomes" color={T.red}>{(play) => <WB_ForcedSell play={play} monthsCovered={cushionMonths} />}</WBPanel>
-              <Btn color={T.oxygen} onClick={() => setPart(2)}>Show me the rule →</Btn>
-            </Card>
-          </Fade>
-        )}
+            </div>
+            <div style={{ background:T.oxygen + "18", border:"1px solid " + T.oxygen + "40", borderRadius:10, padding:"12px 14px", marginBottom:14, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:13, color:T.offWhite }}>🛸 Tank after refill</span>
+              <span style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{yen(Math.min(startTank, tank + refill))}</span>
+            </div>
+            <Btn color={T.teal} onClick={dismissTimestamp}>Fast-forward → Event {idx+1}</Btn>
+          </div>
+        </Box>
+      )}
 
-        {part === 2 && (
-          <Fade>
-            <Card>
-              <Pill color={T.teal}>The Rule</Pill>
-              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>Two buckets. Two jobs. Never mixed.</div>
-              <div style={{ fontSize:13, color:T.slate, marginBottom:18 }}>We split your capital with a hard mathematical line. Each bucket has exactly one job.</div>
-              <div style={{ background:T.navyDeep, border:`2px solid ${T.oxygen}`, borderRadius:14, padding:"16px 18px", marginBottom:12 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-                  <span style={{ fontSize:28 }}>🛸</span>
+      {gameOver && chosen && (
+        <Box borderColor={T.red}>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:40, marginBottom:8 }}>💥</div>
+            <div style={{ fontSize:18, fontWeight:900, color:T.red, marginBottom:6 }}>Colony Collapsed</div>
+            <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6, marginBottom:14 }}>You ran out of lives. The bucket rule was broken too many times.</div>
+            <Btn color={T.red} onClick={() => setScreen("result")}>See Mission Debrief →</Btn>
+          </div>
+        </Box>
+      )}
+
+      {!showTimestamp && !gameOver && (
+        <Box borderColor={evBorderColor}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+            <div style={{ fontSize:36 }}>{ev.icon}</div>
+            <div>
+              <span style={{ fontSize:9, fontWeight:700, color:ev.tagColor, border:"1px solid " + ev.tagColor + "50", borderRadius:4, padding:"2px 6px", textTransform:"uppercase", letterSpacing:0.8 }}>{ev.tag}</span>
+              {ev.isBoss && <span style={{ fontSize:9, fontWeight:700, color:T.red, border:"1px solid " + T.red + "50", borderRadius:4, padding:"2px 6px", marginLeft:6, textTransform:"uppercase", letterSpacing:0.8 }}>Final Event</span>}
+              <div style={{ fontSize:17, fontWeight:900, marginTop:4 }}>{ev.title}</div>
+            </div>
+          </div>
+          <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.75, marginBottom:14 }}>{ev.story}</div>
+          {evBill && (
+            <div style={{ background:T.navy, borderRadius:10, padding:"12px 14px", marginBottom:14, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:12, color:T.slate }}>{evBillLabel}</span>
+              <span style={{ fontSize:20, fontWeight:900, color:T.red }}>{yenF(evBill)}</span>
+            </div>
+          )}
+          {tankEmpty && evBill && !chosen && (
+            <div style={{ background:T.red + "18", border:"1px solid " + T.red + "50", borderRadius:10, padding:"12px 14px", marginBottom:14 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:T.red, marginBottom:4 }}>⚠ Your Oxygen Tank is empty</div>
+              <div style={{ fontSize:12, color:T.offWhite, lineHeight:1.5 }}>Earlier decisions drained your Emergency Fund. This is the moment the bucket rule catches up with you.</div>
+            </div>
+          )}
+          {!chosen && (
+            <div>
+              <div style={{ fontSize:12, color:T.slate, marginBottom:8, fontWeight:600 }}>What do you do?</div>
+              {ev.choices.map((c,i) => {
+                const isLocked = c.needsTank && tankEmpty;
+                return (
+                  <button key={i} onClick={() => !isLocked && pick(c)} style={{ width:"100%", background:T.navyDeep, border:"2px solid " + (isLocked ? T.slate + "20" : T.navyMid), borderRadius:12, padding:"13px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10, cursor: isLocked ? "not-allowed" : "pointer", textAlign:"left", opacity: isLocked ? 0.35 : 1 }}>
+                    <span style={{ fontSize:20 }}>{isLocked ? "🔒" : c.icon}</span>
+                    <div style={{ flex:1 }}>
+                      <span style={{ fontSize:13, color:T.white, fontWeight:600 }}>{c.label}</span>
+                      {isLocked && <div style={{ fontSize:11, color:T.red, marginTop:2 }}>Tank empty — locked</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {chosen && (
+            <div>
+              <div style={{ background: chosen.correct ? T.teal + "22" : T.red + "22", border:"2px solid " + (chosen.correct ? T.teal : T.red), borderRadius:12, padding:"14px", marginBottom:12, display:"flex", gap:10 }}>
+                <span style={{ fontSize:24 }}>{chosen.correct ? "✅" : "❌"}</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color: chosen.correct ? T.teal : T.red, marginBottom:4 }}>{chosen.correct ? "Correct." : "Wrong bucket."}</div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.65 }}>{chosen.explain}</div>
+                </div>
+              </div>
+              {!chosen.correct && evBill && (
+                <div style={{ background:T.amber + "18", border:"1px solid " + T.amber + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div>
-                    <div style={{ fontSize:13, fontWeight:800, color:T.oxygen }}>Bucket A — The Oxygen Tank</div>
-                    <div style={{ fontSize:11, color:T.slate }}>High-Yield Savings Account (HYSA)</div>
+                    <div style={{ fontSize:10, color:T.amber, textTransform:"uppercase", letterSpacing:0.8, marginBottom:2 }}>20-year compounding cost</div>
+                    <div style={{ fontSize:11, color:T.offWhite }}>{yenF(evBill)} withdrawn today at 7%/yr</div>
+                  </div>
+                  <div style={{ fontSize:18, fontWeight:900, color:T.amber }}>{c20(evBill)}</div>
+                </div>
+              )}
+              {chosen.correct && evBill && (
+                <div style={{ background:T.oxygen + "18", border:"1px solid " + T.oxygen + "40", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span style={{ fontSize:13, color:T.offWhite }}>🛸 Tank remaining</span>
+                  <span style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{yen(tank)}</span>
+                </div>
+              )}
+              {ev.jessica && (
+                <div style={{ background:T.teal + "12", border:"1px solid " + T.teal + "30", borderRadius:10, padding:"12px 14px", marginBottom:12 }}>
+                  <div style={{ fontSize:11, color:T.teal, fontWeight:700, marginBottom:4 }}>Jessica's note:</div>
+                  <div style={{ fontSize:12, color:T.offWhite, lineHeight:1.65, fontStyle:"italic" }}>"{ev.jessica}"</div>
+                </div>
+              )}
+              {ev.isBoss && (
+                <div style={{ background:T.purple + "18", border:"2px solid " + T.purple + "50", borderRadius:14, padding:"16px", marginBottom:12 }}>
+                  <div style={{ fontSize:11, color:T.purple, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>⚡ Beyond the Oxygen Tank</div>
+                  <div style={{ fontSize:13, color:T.white, lineHeight:1.7, marginBottom:10 }}>A ¥1,200,000 catastrophic event may exceed your Emergency Fund. The answer is <strong style={{ color:T.teal }}>still not to sell investments.</strong></div>
+                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.7, marginBottom:12 }}>The real solution is <strong style={{ color:T.purple }}>income protection insurance and disaster coverage</strong> — a layer that sits entirely above the oxygen tank.</div>
+                  <div style={{ background:T.navyDeep, borderRadius:10, padding:"12px", display:"flex", gap:10 }}>
+                    <span style={{ fontSize:22 }}>🔒</span>
+                    <div>
+                      <div style={{ fontSize:12, fontWeight:700, color:T.purple }}>Coming in Level 4</div>
+                      <div style={{ fontSize:11, color:T.slate, lineHeight:1.5 }}>We'll cover exactly how to structure protection against catastrophic events — so the colony is never at risk.</div>
+                    </div>
                   </div>
                 </div>
-                {[
-                  { icon:"✓", text:"100% liquid — withdraw in 24 hours, no penalty", color:T.teal },
-                  { icon:"✓", text:"3–6 months of living expenses, no more", color:T.teal },
-                  { icon:"✓", text:"Earns interest to fight inflation — but never invested", color:T.teal },
-                  { icon:"✗", text:"Never used for weekend trips, new gadgets, or market dips", color:T.red }
-                ].map((r, i) => (
-                  <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:6 }}>
-                    <span style={{ fontSize:12, color:r.color, fontWeight:700, marginTop:1, flexShrink:0 }}>{r.icon}</span>
-                    <span style={{ fontSize:12, color:T.offWhite, lineHeight:1.5 }}>{r.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ background:T.navyDeep, border:`2px solid ${T.colony}`, borderRadius:14, padding:"16px 18px", marginBottom:16 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-                  <span style={{ fontSize:28 }}>🚀</span>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:800, color:T.colony }}>Bucket B — The Growth Engine</div>
-                    <div style={{ fontSize:11, color:T.slate }}>Brokerage Account / NISA</div>
-                  </div>
-                </div>
-                {[
-                  { icon:"✓", text:"Minimum 5-year horizon — this money does not leave", color:T.teal },
-                  { icon:"✓", text:"Every spare yen after the oxygen tank is full goes here", color:T.teal },
-                  { icon:"✓", text:"Designed to ride out dips — that's the whole point", color:T.teal },
-                  { icon:"✗", text:"Never touched for emergencies — that's what Bucket A is for", color:T.red }
-                ].map((r, i) => (
-                  <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:6 }}>
-                    <span style={{ fontSize:12, color:r.color, fontWeight:700, marginTop:1, flexShrink:0 }}>{r.icon}</span>
-                    <span style={{ fontSize:12, color:T.offWhite, lineHeight:1.5 }}>{r.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ background:`${T.amber}12`, border:`1px solid ${T.amber}40`, borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:T.amber, marginBottom:8 }}>The order of operations:</div>
-                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  {[
-                    { label:"Fill Bucket A", sub:"3–6 mo expenses", icon:"🛸", color:T.oxygen },
-                    { label:"→", sub:"", icon:"", color:T.slate },
-                    { label:"Deploy to Bucket B", sub:"every extra yen", icon:"🚀", color:T.colony }
-                  ].map((s, i) => s.label === "→" ? <div key={i} style={{ fontSize:20, color:T.slate }}>→</div> : <div key={i} style={{ flex:1, textAlign:"center", background:T.navyDeep, borderRadius:10, padding:"10px 8px" }}><div style={{ fontSize:20, marginBottom:4 }}>{s.icon}</div><div style={{ fontSize:11, fontWeight:700, color:s.color }}>{s.label}</div><div style={{ fontSize:10, color:T.slate, marginTop:2 }}>{s.sub}</div></div>)}
-                </div>
-              </div>
-              <Btn color={T.teal} onClick={() => setPart(3)}>Calculate my Liquidity Line →</Btn>
-            </Card>
-          </Fade>
-        )}
-
-        {part === 3 && (
-          <Fade>
-            <Card>
-              <Pill color={T.teal}>The Liquidity Calculator</Pill>
-              <div style={{ fontSize:21, fontWeight:900, lineHeight:1.3, marginBottom:6 }}>Your personal Oxygen Tank size</div>
-              <div style={{ fontSize:13, color:T.slate, marginBottom:18 }}>Plug in your real numbers. We'll tell you exactly where the line is drawn.</div>
-              <SliderField label="Monthly living expenses" value={expenses} onChange={setExpenses} min={50000} max={800000} step={10000} display={fmt(expenses)} color={T.slate} />
-              <div style={{ marginBottom:20 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                  <span style={{ fontSize:13, color:T.slate }}>Oxygen tank target</span>
-                  <div style={{ display:"flex", gap:8 }}>
-                    {[3,4,6].map(m => (
-                      <button key={m} onClick={() => setMonthsTarget(m)} style={{ padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", border:`1.5px solid ${monthsTarget===m?T.oxygen:T.navyMid}`, background:monthsTarget===m?`${T.oxygen}25`:T.navyCard, color:monthsTarget===m?T.oxygen:T.slate, transition:"all 0.2s" }}>{m} mo</button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ background:T.navyDeep, borderRadius:10, padding:"12px 14px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontSize:13, color:T.offWhite }}>Your Oxygen Tank target:</span>
-                    <span style={{ fontSize:18, fontWeight:900, color:T.oxygen }}>{fmtFull(oxygenTarget)}</span>
-                  </div>
-                </div>
-              </div>
-              <SliderField label="Current liquid cash (savings)" value={currentCash} onChange={setCurrentCash} min={0} max={3000000} step={10000} display={fmt(currentCash)} color={oxygenFull?T.teal:T.amber} />
-              <div style={{ marginBottom:16 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                  <span style={{ fontSize:12, color:T.slate }}>Oxygen Tank status</span>
-                  <span style={{ fontSize:13, fontWeight:800, color:oxygenFull?T.teal:T.amber }}>{Math.min(100, Math.round(oxygenPct))}% full</span>
-                </div>
-                <div style={{ background:T.navyDeep, borderRadius:6, height:24, overflow:"hidden", position:"relative" }}>
-                  <div style={{ height:"100%", width:`${Math.min(100, oxygenPct)}%`, background: oxygenFull ? `linear-gradient(90deg, ${T.teal}, ${T.oxygen})` : `linear-gradient(90deg, ${T.amber}, ${T.oxygen}60)`, borderRadius:6, transition:"width 0.4s ease", display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:8 }}>
-                    {oxygenPct > 20 && <span style={{ fontSize:10, fontWeight:700, color:T.navy }}>🛸</span>}
-                  </div>
-                </div>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:T.slate, marginTop:3 }}>
-                  <span>¥0</span>
-                  <span style={{ color:oxygenFull?T.teal:T.amber }}>Target: {fmtFull(oxygenTarget)}</span>
-                </div>
-              </div>
-              <div style={{ background:T.navyDeep, borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                <div style={{ fontSize:11, color:T.slate, textTransform:"uppercase", letterSpacing:0.8, marginBottom:12 }}>Your Capital Split</div>
-                <div style={{ display:"flex", gap:10 }}>
-                  <div style={{ flex:1, background:`${T.oxygen}15`, border:`1px solid ${T.oxygen}40`, borderRadius:10, padding:"10px", textAlign:"center" }}>
-                    <div style={{ fontSize:10, color:T.oxygen, marginBottom:4 }}>🛸 Oxygen Tank</div>
-                    <div style={{ fontSize:16, fontWeight:900, color:T.oxygen }}>{fmtFull(Math.min(currentCash, oxygenTarget))}</div>
-                    <div style={{ fontSize:10, color:T.slate, marginTop:2 }}>stays in HYSA</div>
-                  </div>
-                  <div style={{ flex:1, background:`${deployable > 0 ? T.teal : T.slate}15`, border:`1px solid ${deployable > 0 ? T.teal : T.slate}40`, borderRadius:10, padding:"10px", textAlign:"center" }}>
-                    <div style={{ fontSize:10, color: deployable > 0 ? T.teal : T.slate, marginBottom:4 }}>🚀 Deployable</div>
-                    <div style={{ fontSize:16, fontWeight:900, color: deployable > 0 ? T.teal : T.slate }}>{fmtFull(deployable)}</div>
-                    <div style={{ fontSize:10, color:T.slate, marginTop:2 }}>ready to invest</div>
-                  </div>
-                </div>
-                {!oxygenFull && (
-                  <div style={{ marginTop:10, fontSize:12, color:T.amber, textAlign:"center", lineHeight:1.5 }}>⚠ Fill the oxygen tank first. You need <strong>{fmtFull(shortfall)} more</strong> before deploying to the market.</div>
-                )}
-              </div>
-              <Btn color={T.teal} onClick={() => setPart(4)}>See my verdict →</Btn>
-            </Card>
-          </Fade>
-        )}
-
-        {part === 4 && (
-          <Fade>
-            {oxygenFull && (
-              <Card borderColor={T.teal}>
-                <div style={{ textAlign:"center", padding:"10px 0 16px" }}>
-                  <div style={{ fontSize:52, marginBottom:10 }}>🟢</div>
-                  <div style={{ fontSize:22, fontWeight:900, color:T.teal, marginBottom:6 }}>Oxygen Tank is full.</div>
-                  <div style={{ fontSize:14, color:T.offWhite, lineHeight:1.6, maxWidth:320, margin:"0 auto" }}>You are mathematically protected. The Lock-up Fear Boss is defeated.</div>
-                </div>
-                <Hr />
-                <div style={{ background:`${T.teal}15`, border:`2px solid ${T.teal}`, borderRadius:14, padding:"20px", textAlign:"center", marginBottom:16 }}>
-                  <div style={{ fontSize:12, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>You can invest today — guilt-free</div>
-                  <div style={{ fontSize:40, fontWeight:900, color:T.teal, marginBottom:4 }}>{fmtFull(deployable)}</div>
-                  <div style={{ fontSize:12, color:T.offWhite }}>Your Oxygen Tank ({fmtFull(oxygenTarget)}) is secured in HYSA. This amount is free to deploy to the market.</div>
-                </div>
-                <VRow icon="🛸" color={T.oxygen} label="Oxygen Tank (HYSA)" value={fmtFull(Math.min(currentCash, oxygenTarget))} />
-                <VRow icon="🚀" color={T.teal}   label="Deployable to market"  value={fmtFull(deployable)} />
-                <VRow icon="📅" color={T.slate}  label="Monthly expenses"      value={fmtFull(expenses)} />
-                <VRow icon="⏱" color={T.slate}  label="Coverage"              value={`${cushionMonths.toFixed(1)} months`} />
-                <div style={{ background:`${T.teal}12`, border:`1px solid ${T.teal}40`, borderRadius:12, padding:"14px 16px", marginTop:14, marginBottom:14 }}>
-                  <div style={{ fontSize:11, color:T.teal, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>Your next move</div>
-                  <div style={{ fontSize:15, fontWeight:800, color:T.white, marginBottom:6 }}>🚀 Deploy {fmtFull(deployable)} to your Growth Engine</div>
-                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6 }}>Open your NISA or brokerage account. Route exactly {fmtFull(deployable)} into a broad-based index fund. Your oxygen tank stays untouched in your HYSA. You are protected on both sides.</div>
-                </div>
-                <Btn color={T.teal} onClick={triggerQuizNavigation}>Enter Simulator Quiz →</Btn>
-              </Card>
-            )}
-
-            {!oxygenFull && (
-              <Card borderColor={T.amber}>
-                <div style={{ textAlign:"center", padding:"10px 0 16px" }}>
-                  <div style={{ fontSize:52, marginBottom:10 }}>🛸</div>
-                  <div style={{ fontSize:22, fontWeight:900, color:T.amber, marginBottom:6 }}>Fill the tank first.</div>
-                  <div style={{ fontSize:14, color:T.offWhite, lineHeight:1.6, maxWidth:320, margin:"0 auto" }}>You understand the rule. Now your job is to execute it before deploying to the market.</div>
-                </div>
-                <Hr />
-                <div style={{ background:`${T.amber}12`, border:`2px solid ${T.amber}`, borderRadius:14, padding:"20px", textAlign:"center", marginBottom:16 }}>
-                  <div style={{ fontSize:12, color:T.slate, textTransform:"uppercase", letterSpacing:1, marginBottom:6 }}>Amount needed to unlock investing</div>
-                  <div style={{ fontSize:40, fontWeight:900, color:T.amber, marginBottom:4 }}>{fmtFull(shortfall)}</div>
-                  <div style={{ fontSize:12, color:T.offWhite }}>Once your HYSA holds {fmtFull(oxygenTarget)}, your oxygen tank is full. Every yen after that goes straight to the market.</div>
-                </div>
-                <VRow icon="🛸" color={T.oxygen} label="Current cash"        value={fmtFull(currentCash)} />
-                <VRow icon="🎯" color={T.amber}  label="Oxygen Tank target"  value={fmtFull(oxygenTarget)} />
-                <VRow icon="⚠" color={T.amber}  label="Shortfall"           value={fmtFull(shortfall)} />
-                <div style={{ background:`${T.amber}12`, border:`1px solid ${T.amber}40`, borderRadius:12, padding:"14px 16px", marginTop:14, marginBottom:14 }}>
-                  <div style={{ fontSize:11, color:T.amber, fontWeight:700, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>Your current quest</div>
-                  <div style={{ fontSize:15, fontWeight:800, color:T.white, marginBottom:6 }}>🛸 Build the {fmtFull(oxygenTarget)} Oxygen Tank</div>
-                  <div style={{ fontSize:13, color:T.offWhite, lineHeight:1.6 }}>Open a High-Yield Savings Account. Set up an automatic transfer until you hit {fmtFull(oxygenTarget)}. Come back when it's full — your {monthsTarget}-month shield will be in place and you'll have a green light to deploy to the market with zero fear.</div>
-                </div>
-                <div style={{ display:"flex", gap:10 }}>
-                  <Btn color={T.amber} style={{ flex:1, color:T.navy }} onClick={triggerQuizNavigation}>Try Simulator Anyway</Btn>
-                  <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => setPart(3)}>Adjust numbers</Btn>
-                </div>
-              </Card>
-            )}
-            <button onClick={() => setPart(0)} style={{ display:"block", margin:"20px auto 0", background:"none", border:"none", color:T.slate, fontSize:12, cursor:"pointer", textDecoration:"underline" }}>← Start lesson over</button>
-          </Fade>
-        )}
-      </div>
-    </div>
+              )}
+              {!gameOver && <Btn color={T.teal} onClick={next}>{isLast ? "See Mission Results →" : "Next Event (" + (idx+2) + "/10) →"}</Btn>}
+              {gameOver && <Btn color={T.red} onClick={() => setScreen("result")}>See Mission Debrief →</Btn>}
+            </div>
+          )}
+        </Box>
+      )}
+    </Wrap>
   );
 }
 
-export default function Lesson11Page() {
+export default function QuizApp() {
   return (
     <Suspense fallback={
       <div style={{ background: T.navy, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ color: T.slate, fontSize: 14 }}>Initializing Lesson 1-1...</div>
+        <div style={{ color: T.slate, fontSize: 14 }}>Initializing Simulator...</div>
       </div>
     }>
-      <Lesson11Content />
+      <QuizContent />
     </Suspense>
   );
 }
 
-function Fade({ children }) {
-  const [show, setShow] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setShow(true), 40); return () => clearTimeout(t); }, []);
+function Wrap({ children }) {
   return (
-    <div style={{ opacity:show?1:0, transform:show?"none":"translateY(12px)", transition:"opacity 0.4s ease, transform 0.4s ease" }}>{children}</div>
+    <div style={{ minHeight:"100vh", background:T.navy, fontFamily:"'Inter', system-ui, sans-serif", color:T.white, padding:"0 16px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+      <div style={{ width:"100%", maxWidth:480 }}>{children}</div>
+    </div>
   );
 }
-function Card({ children, borderColor }) {
+function Box({ children, borderColor }) {
   return (
-    <div style={{ background:T.navyCard, borderRadius:16, padding:"20px 18px", marginBottom:16, border:`1px solid ${borderColor||T.navyMid}`, transition:"border-color 0.3s" }}>{children}</div>
-  );
-}
-function Pill({ children, color }) {
-  return (
-    <div style={{ display:"inline-block", fontSize:10, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", color, border:`1px solid ${color}`, borderRadius:6, padding:"3px 8px", marginBottom:12 }}>{children}</div>
+    <div style={{ background:T.navyCard, borderRadius:16, padding:"20px 18px", marginBottom:14, border:"1px solid " + (borderColor || T.navyMid) }}>{children}</div>
   );
 }
 function SliderField({ label, value, onChange, min, max, step, display, color }) {
@@ -483,22 +728,13 @@ function SliderField({ label, value, onChange, min, max, step, display, color })
       </div>
       <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} style={{ width:"100%", accentColor:color, cursor:"pointer" }} />
       <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:T.slate, marginTop:2 }}>
-        <span>{fmt(min)}</span><span>{fmt(max)}</span>
+        <span>{yen(min)}</span><span>{yen(max)}</span>
       </div>
     </div>
   );
 }
-function Hr() { return <div style={{ height:1, background:T.navyMid, margin:"14px 0 18px" }} />; }
-function VRow({ icon, color, label, value }) {
+function Btn({ children, onClick, color, style }) {
   return (
-    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${T.navyMid}`, fontSize:13 }}>
-      <span style={{ color:T.slate }}>{label}</span>
-      <span style={{ color, fontWeight:700 }}>{icon} {value}</span>
-    </div>
-  );
-}
-function Btn({ children, onClick, color, disabled, style }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{ display:"block", width:"100%", padding:"15px", marginTop:14, borderRadius:12, border:"none", background:disabled?T.navyMid:color, color:color===T.amber?T.navy:T.white, fontSize:15, fontWeight:800, cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.45:1, transition:"opacity 0.2s", ...style }}>{children}</button>
+    <button onClick={onClick} style={{ display:"block", width:"100%", padding:"15px", marginTop:14, borderRadius:12, border:"none", background:color, color: color === T.amber ? T.navy : T.white, fontSize:15, fontWeight:800, cursor:"pointer", ...style }}>{children}</button>
   );
 }

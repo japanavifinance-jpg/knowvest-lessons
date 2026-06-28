@@ -142,7 +142,7 @@ function WBPanel({ title, color, children }) {
   );
 }
 
-function Lesson11Content() { // 👈 Renamed to 1-1
+function Lesson11Content() {
   const searchParams = useSearchParams();
   const urlUid = searchParams.get("uid");
   const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
@@ -173,14 +173,14 @@ function Lesson11Content() { // 👈 Renamed to 1-1
     try {
       const ref = doc(db, "users", uid, "progress", "summary");
       await setDoc(ref, {
-        lesson_1_1: { // 👈 Changed key to 1_1
+        lesson_1_1: {
           status: "inprogress"
         }
       }, { merge: true });
     } catch (e) {
       console.error(e);
     }
-    window.location.href = `https://project-0d07n.vercel.app/lesson-1-1-quiz.html?uid=${uid}`; // 👈 Changed route to 1-1
+    window.location.href = `https://project-0d07n.vercel.app/lesson-1-1-quiz.html?uid=${uid}`;
   }
 
   const LABELS = ["The Fear","The Analogy","The Rule","Your Numbers","Your Verdict"];
@@ -445,7 +445,7 @@ function Lesson11Content() { // 👈 Renamed to 1-1
   );
 }
 
-export default function Lesson11Page() { // 👈 Renamed Page wrapper
+export default function Lesson11Page() {
   return (
     <Suspense fallback={
       <div style={{ background: T.navy, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
@@ -489,11 +489,17 @@ function SliderField({ label, value, onChange, min, max, step, display, color })
   );
 }
 function Hr() { return <div style={{ height:1, background:T.navyMid, margin:"14px 0 18px" }} />; }
+/* ── Added the missing components that caused the crash ── */
 function VRow({ icon, color, label, value }) {
   return (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${T.navyMid}`, fontSize:13 }}>
       <span style={{ color:T.slate }}>{label}</span>
       <span style={{ color, fontWeight:700 }}>{icon} {value}</span>
     </div>
+  );
+}
+function Btn({ children, onClick, color, disabled, style }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{ display:"block", width:"100%", padding:"15px", marginTop:14, borderRadius:12, border:"none", background:disabled?T.navyMid:color, color:color===T.amber?T.navy:T.white, fontSize:15, fontWeight:800, cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.45:1, transition:"opacity 0.2s", ...style }}>{children}</button>
   );
 }
