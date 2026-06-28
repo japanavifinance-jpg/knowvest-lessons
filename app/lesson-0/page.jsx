@@ -467,18 +467,24 @@ function Lesson0Content() {
           completedAt: serverTimestamp(),
         }
       };
-      if (outcome === "green") {
-        update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
-     }
-     await setDoc(ref, update, { merge: true });
     
-     // ── ONLY REDIRECT OUT OF THE PAGE IF THEY PASSED ──
+      // If they passed perfectly, activate Lesson 1-1 as active!
+      if (outcome === "green") {
+        // NOTE: Fixed the key name from lesson_1_2 to lesson_1_1 to match your curriculum structure!
+        update.lesson_1_1 = { status: "active", quizPassed: false, attempts: 0 };
+      }
+    
+      // ── FORCE THE BROWSER TO WAIT FOR THE DATABASE WRITE TO FINISH ──
+      await setDoc(ref, update, { merge: true });
+      console.log("Progress saved successfully for outcome:", outcome);
+
+      // ── NOW SAFE TO REDIRECT OUT OF THE PAGE ──
       if (outcome === "green") {
         window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
       }
-    } catch (err) {
+   } catch (err) {
       console.error("Failed to save progress:", err);
-    }
+   }
   }
   const profile        = EMOTIONS.find(e => e.id === emotion);
   const monthsCovered  = savings / Math.max(expenses, 1);
@@ -749,7 +755,11 @@ function Lesson0Content() {
                 <Hr />
                 <VRow icon="✓" color={T.teal} label="Debt check" value={hasDebt?`${debtRate}% — below threshold`:"Debt-free"} />
                 <VRow icon="✓" color={T.teal} label="Emergency cushion" value={`${monthsCovered.toFixed(1)} months covered`} />
-                <Btn color={T.teal} onClick={() => completeLesson("green")}>Unlock Level 1 →</Btn>
+    
+                {/* Clean, uninterrupted execution call */}
+                <Btn color={T.teal} onClick={() => completeLesson("green")}>
+                  Unlock Level 1 →
+                </Btn>
               </Card>
             )}
 
