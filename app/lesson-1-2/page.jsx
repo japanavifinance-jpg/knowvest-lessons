@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation"; // 👈 Added tracking hooks
-import { initializeApp, getApps } from "firebase/app"; // 👈 Added Firebase modules
+import { useSearchParams } from "next/navigation";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -28,7 +28,6 @@ const T = {
   white:    "#F0F4F8",
 };
 
-// ── PRIMITIVES ──
 function Dots({ total, current }) {
   return (
     <div style={{ display: "flex", gap: "5px", justifyContent: "center", padding: "12px 0 16px" }}>
@@ -51,10 +50,6 @@ function GhostBtn({ children, onClick }) {
   return <button onClick={onClick} style={{ background: "transparent", color: T.teal, border: "1.5px solid " + T.teal, borderRadius: "12px", padding: "13px 20px", fontSize: "14px", fontWeight: 600, width: "100%", cursor: "pointer", marginTop: "8px" }}>{children}</button>;
 }
 
-function Tag({ children }) {
-  return <div style={{ display: "inline-block", background: T.teal + "22", color: T.teal, border: "1px solid " + T.teal + "44", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", fontWeight: 600, marginBottom: "16px" }}>{children}</div>;
-}
-
 function Card({ children, style = {} }) {
   return <div style={{ background: T.navyCard, borderRadius: "16px", padding: "20px", marginBottom: "16px", ...style }}>{children}</div>;
 }
@@ -68,10 +63,10 @@ function MythBox({ children }) {
   );
 }
 
-// function TruthBox({ children }) {
+function TruthBox({ children }) {
   return (
     <div style={{ background: T.teal + "15", border: "1px solid " + T.teal + "40", borderRadius: "12px", padding: "14px", marginBottom: "12px" }}>
-      <div style={{ fontSize: "11px", fontWeight: 700, color: T.teal, letterSpacing: "1px", textTransform:"uppercase", marginBottom: "6px" }}>The Reality</div>
+      <div style={{ fontSize: "11px", fontWeight: 700, color: T.teal, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>The Reality</div>
       <div style={{ fontSize: "14px", color: T.offwhite, lineHeight: 1.5 }}>{children}</div>
     </div>
   );
@@ -222,7 +217,7 @@ function SliderRow({ label, val, display, min, max, step, onChange }) {
         <span style={{ fontSize: "14px", color: T.offwhite }}>{label}</span>
         <span style={{ fontSize: "15px", fontWeight: 700, color: T.teal }}>{display}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={val} onChange={(e) => onChange(Number(e.target.value))} style={{ width: "100%", accentColor: T.teal }} />
+      <input type="range" min={min} max={max} step={step} value={val} onChange={(e) => onChange(Number(e.target.value))} style={{ width:"100%", accentColor: T.teal }} />
     </div>
   );
 }
@@ -257,7 +252,7 @@ function Calculator({ onNext }) {
   );
 }
 
-function Lesson11Content() {
+function Lesson12Content() {
   const searchParams = useSearchParams();
   const urlUid = searchParams.get("uid");
   const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
@@ -271,12 +266,11 @@ function Lesson11Content() {
   const [step, setStep] = useState(0);
   const [mo, setMo]     = useState(5000);
 
-  // ── CENTRAL ROUTER INTEGRATION ──
-  async function triggerQuizNavigation(chosenMo) {
+  async function triggerQuizNavigation() {
     if (uid) {
       try {
         const ref = doc(db, "users", uid, "progress", "summary");
-        await setDoc(ref, { lesson_1_1: { status: "inprogress" } }, { merge: true });
+        await setDoc(ref, { lesson_1_2: { status: "inprogress" } }, { merge: true });
       } catch (e) {
         console.error(e);
       }
@@ -289,7 +283,7 @@ function Lesson11Content() {
       {step === 0 && (
         <Screen>
           <Dots total={5} current={0} />
-          <PartLabel text="Lesson 1-1 · The Capital Myth" />
+          <PartLabel text="Lesson 1-2 · The Capital Myth" />
           <div style={{ fontSize: "28px", fontWeight: 700, color: T.white, lineHeight: 1.2, margin: "16px 0 20px" }}>"I'll start investing when I have more money."</div>
           <div style={{ fontSize: "15px", color: T.offwhite, lineHeight: 1.65, marginBottom: "20px" }}>Sound familiar? You've told yourself this. Maybe more than once.<br /><br />Here's the brutal truth — <span style={{ color: T.teal, fontWeight: 700 }}>that sentence has cost people more wealth than any market crash in history.</span></div>
           <MythBox>You need thousands — maybe tens of thousands — to start investing.</MythBox>
@@ -351,7 +345,7 @@ function Lesson11Content() {
               <Card>
                 <div style={{ fontSize: "12px", color: T.slate, marginBottom: "4px" }}>Your projected portfolio (10 yr)</div>
                 <div style={{ fontSize: "24px", fontWeight: 700, color: T.teal }}>{fmtYen(calcDCA(mo, 10).future)}</div>
-                <div style={{ fontSize: "13px", color: T.slate, marginTop: "4px" }}>vs {fmtYen(calcDCA(mo, 10).invested)} invested · {(calcDCA(mo, 10).future / calcDCA(mo, 10).invested).toFixed(1)}x multiplier</div>
+                <div style={{ fontSize: "13px", color: T.slate, marginTop: "4px" }}>vs ${fmtYen(calcDCA(mo, 10).invested)} invested · ${(calcDCA(mo, 10).future / calcDCA(mo, 10).invested).toFixed(1)}x multiplier</div>
               </Card>
             ) : (
               <div style={{ background: T.navyCard, borderRadius: "12px", padding: "16px", borderLeft: "3px solid " + T.amber, marginBottom: "16px" }}>
@@ -371,10 +365,10 @@ function Lesson11Content() {
   );
 }
 
-export default function Lesson11() {
+export default function Lesson12() {
   return (
     <Suspense fallback={<div style={{ background: T.navy, minHeight: "100vh" }} />}>
-      <Lesson11Content />
+      <Lesson12Content />
     </Suspense>
   );
 }
