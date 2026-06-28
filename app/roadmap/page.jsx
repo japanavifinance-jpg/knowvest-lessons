@@ -26,8 +26,8 @@ const LESSONS = [
     num: '1-1',
     emoji: '💸',
     title: 'The Capital Myth',
-    url: 'https://project-0d07n.vercel.app/lesson-1-1',
-    quizUrl: 'https://project-0d07n.vercel.app/lesson-1-1-quiz',
+    url: 'https://project-0d07n.vercel.app/lesson-1-1.html',
+    quizUrl: 'https://project-0d07n.vercel.app/lesson-1-1-quiz.html',
     desc: 'Think you need more money to start? This lesson dismantles the most common reason people never begin.',
   },
   {
@@ -35,8 +35,8 @@ const LESSONS = [
     num: '1-2',
     emoji: '💧',
     title: 'The Liquidity Line',
-    url: 'https://project-0d07n.vercel.app/lesson-1-2',
-    quizUrl: 'https://project-0d07n.vercel.app/lesson-1-2-quiz',
+    url: 'https://project-0d07n.vercel.app/lesson-1-2.html',
+    quizUrl: 'https://project-0d07n.vercel.app/lesson-1-2-quiz.html',
     desc: 'Know exactly how much cash to keep on the sidelines — and how much is just fear in disguise.',
   },
   {
@@ -368,6 +368,8 @@ function RoadmapContent() {
         )}
 
         {/* LOCKED LEVELS */}
+        <div style={s.lockedHint}>Logistical Layer · 7 more lessons</div>
+
         <div style={s.divider}><div style={s.divLine}/><div style={s.divPill}>Level 2 · Locked 🔒</div><div style={s.divLine}/></div>
         <div style={s.lockedHint}>Market Mechanics · 6 lessons</div>
 
