@@ -254,7 +254,7 @@ function WBPanel({ title, color, children }) {
   );
 }
 
-// ── Main Lesson 1-2 ───────────────────────────────────────────
+// ── Main Lesson 1-1 ───────────────────────────────────────────
 export default function Lesson12() {
   // parts: 0=hook, 1=analogy, 2=rule, 3=calculator, 4=verdict
   const [part, setPart]           = useState(0);
@@ -287,7 +287,7 @@ export default function Lesson12() {
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 0 14px" }}>
           <div>
             <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>
-              Level 1 · Lesson 1-2
+              Level 1 · Lesson 1-1
             </div>
             <div style={{ fontSize:17, fontWeight:800 }}>{LABELS[part]}</div>
           </div>
