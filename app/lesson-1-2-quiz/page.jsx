@@ -1,5 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation"; // 👈 Added tracking hooks
+import { initializeApp, getApps } from "firebase/app"; // 👈 Added Firebase modules
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDFVDqRSY3AFRw00aF7uiAo1yXJGHNhA5U",
+  authDomain: "japanaviwealth.firebaseapp.com",
+  projectId: "japanaviwealth",
+  storageBucket: "japanaviwealth.firebasestorage.app",
+  messagingSenderId: "886986947572",
+  appId: "1:886986947572:web:2ea442a6ffd873e21157a1"
+};
+const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(firebaseApp);
 
 const T = {
   teal: "#1D9E75",
@@ -59,76 +73,16 @@ const PERSONALITIES = {
 };
 
 const EVENTS = [
-  {
-    icon: "💴", q: "You have ¥500 right now. An ETF unit costs ¥100.", sub: "Is ¥500 enough to actually invest?",
-    opts: [
-      { icon: "❌", txt: "No — too small to matter", cor: false, why: "¥500 buys 5 real ETF units. Each unit owns a proportional slice of 500 companies. Size does not change your ownership rights." },
-      { icon: "✅", txt: "Yes — buys 5 real units", cor: true, why: "Correct. 5 units today at ¥100 = real fractional ownership. Same % return as someone buying 5,000 units." },
-    ],
-  },
-  {
-    icon: "🍕", q: "Apple share = ¥28,000. You have ¥1,000.", sub: "Can you own a piece of Apple?",
-    opts: [
-      { icon: "✅", txt: "Yes — fractional slice", cor: true, why: "Fractional shares let you own 0.035 of a share. When Apple rises 10%, your ¥1,000 rises 10% too. Proportional. Always." },
-      { icon: "❌", txt: "No — need ¥28,000 first", cor: false, why: "This is the myth. You do not need the whole pizza. ¥1,000 buys a real slice. The company does not care how much you invested." },
-    ],
-  },
-  {
-    icon: "📐", q: "You own 0.035 of a share. Stock rises 10%.", sub: "How much do YOU gain?",
-    opts: [
-      { icon: "😐", txt: "Nothing — too small", cor: false, why: "Proportional ownership means every percentage move applies equally. 0.035 shares × 10% = exactly 10% gain on your investment." },
-      { icon: "📈", txt: "Exactly 10% on my money", cor: true, why: "Correct. Fractional = proportional. Your return percentage is identical to someone who owns 1,000 shares. The math does not discriminate." },
-    ],
-  },
-  {
-    icon: "⏳", q: '"I\'ll start when I have ¥100,000 saved."', sub: "What does waiting 3 years actually cost?",
-    opts: [
-      { icon: "👍", txt: "Nothing — smarter to wait", cor: false, why: "At 7%/yr: ¥5,000/month started today = ¥200k+ in 3 years of compounding you never get back. Waiting is not free." },
-      { icon: "💸", txt: "Years of compounding — gone", cor: true, why: "Every month you wait, the compounding clock starts without you. ¥100k threshold is the myth in disguise. ¥100 is the real minimum." },
-    ],
-  },
-  {
-    icon: "🏪", q: 'Friend says: "ETFs are for people with real money."', sub: "Myth or fact?",
-    opts: [
-      { icon: "🤔", txt: "Probably true — ETFs feel serious", cor: false, why: "eMAXIS Slim S&P 500 minimum = ¥100. That's literally one coin. 'For serious investors only' is the myth wearing a suit." },
-      { icon: "🚨", txt: "100% myth — minimum is ¥100", cor: true, why: "Correct. ¥100 buys real proportional ownership in 500 of the world's biggest companies. ETFs were designed for everyone." },
-    ],
-  },
-  {
-    icon: "📊", q: "¥500/month invested for 30 years at 7%.", sub: "What does it grow to?",
-    opts: [
-      { icon: "😐", txt: "About ¥180,000 — barely worth it", cor: false, why: "¥500/month × 30 years = ¥180k contributed. But with 7% compounding, the actual value = ¥566,000. Compounding triples your money." },
-      { icon: "💰", txt: "Over ¥560,000 — compounding wins", cor: true, why: "Correct. ¥180k contributed → ¥566k total. The extra ¥386k is free money from compounding. Small + consistent beats large + late." },
-    ],
-  },
-  {
-    icon: "🧾", q: "Your portfolio shows ¥3,200 after 6 months of ¥500/month.", sub: "Is this a failure?",
-    opts: [
-      { icon: "😔", txt: "Yes — this is embarrassing", cor: false, why: "¥3,200 after 6 months IS the Capital Myth talking. In 30 years that ¥3,200 seed alone is worth ¥24,000+ at 7%. The start is never the finish." },
-      { icon: "💪", txt: "No — the habit is the win", cor: true, why: "Correct. The myth wants you to judge the start by its size. The math judges it by its time. ¥3,200 today → compound growth for decades." },
-    ],
-  },
-  {
-    icon: "🗓️", q: "Invest ¥5,000/month starting today vs. starting in 2 years.", sub: "Same total contribution. Who wins?",
-    opts: [
-      { icon: "🤝", txt: "Same result — same amount", cor: false, why: "Starting today: ~¥652k after 10yr. Starting in 2yr: ~¥476k after 10yr. Two years of compounding = ¥176k difference. Time is not neutral." },
-      { icon: "⏩", txt: "Starting today wins — by a lot", cor: true, why: "Correct. 2 lost years = ¥176k gap at 7%/yr. The Capital Myth always costs more than it looks. Starting small now beats waiting to start big." },
-    ],
-  },
-  {
-    icon: "🇯🇵", q: "NISA account in Japan. What's the minimum to open and invest?", sub: "Be honest — what did you think before this lesson?",
-    opts: [
-      { icon: "💭", txt: "Thought you needed ¥50,000+", cor: false, why: "Most expats assume NISA needs big money. Reality: SBI and Rakuten allow NISA investments from ¥100. The barrier was never money — it was the myth." },
-      { icon: "✅", txt: "¥100 — the myth lied to me", cor: true, why: "Correct. ¥100 opens a NISA investment at major Japanese brokers. The system is built for small, consistent investing. You were always eligible." },
-    ],
-  },
-  {
-    icon: "🏆", q: "¥500/month at age 25 vs ¥50,000/month starting at age 45.", sub: "Same total contributed. Who has more at 65?",
-    opts: [
-      { icon: "💼", txt: "The ¥50,000 investor — bigger amounts", cor: false, why: "Wrong. The ¥500/month investor wins by a massive margin. 40 years of compounding destroys 20 years of bigger contributions. Time > amount. Always." },
-      { icon: "🌱", txt: "The ¥500 investor — time wins", cor: true, why: "Final boss answer. ¥500/month from 25 = ~¥1.3M at 65. ¥50,000/month from 45 = ~¥522k. Small + early + consistent = the only formula that matters." },
-    ],
-  },
+  { icon: "💴", q: "You have ¥500 right now. An ETF unit costs ¥100.", sub: "Is ¥500 enough to actually invest?", opts: [ { icon: "❌", txt: "No — too small to matter", cor: false, why: "¥500 buys 5 real ETF units. Each unit owns a proportional slice of 500 companies. Size does not change your ownership rights." }, { icon: "✅", txt: "Yes — buys 5 real units", cor: true, why: "Correct. 5 units today at ¥100 = real fractional ownership. Same % return as someone buying 5,000 units." } ] },
+  { icon: "🍕", q: "Apple share = ¥28,000. You have ¥1,000.", sub: "Can you own a piece of Apple?", opts: [ { icon: "✅", txt: "Yes — fractional slice", cor: true, why: "Fractional shares let you own 0.035 of a share. When Apple rises 10%, your ¥1,000 rises 10% too. Proportional. Always." }, { icon: "❌", txt: "No — need ¥28,000 first", cor: false, why: "This is the myth. You do not need the whole pizza. ¥1,000 buys a real slice. The company does not care how much you invested." } ] },
+  { icon: "📐", q: "You own 0.035 of a share. Stock rises 10%.", sub: "How much do YOU gain?", opts: [ { icon: "😐", txt: "Nothing — too small", cor: false, why: "Proportional ownership means every percentage move applies equally. 0.035 shares × 10% = exactly 10% gain on your investment." }, { icon: "📈", txt: "Exactly 10% on my money", cor: true, why: "Correct. Fractional = proportional. Your return percentage is identical to someone who owns 1,000 shares. The math does not discriminate." } ] },
+  { icon: "⏳", q: '"I\'ll start when I have ¥100,000 saved."', sub: "What does waiting 3 years actually cost?", opts: [ { icon: "👍", txt: "Nothing — smarter to wait", cor: false, why: "At 7%/yr: ¥5,000/month started today = ¥200k+ in 3 years of compounding you never get back. Waiting is not free." }, { icon: "💸", txt: "Years of compounding — gone", cor: true, why: "Every month you wait, the compounding clock starts without you. ¥100k threshold is the myth in disguise. ¥100 is the real minimum." } ] },
+  { icon: "✈️", q: 'Friend says: "ETFs are for people with real money."', sub: "Myth or fact?", opts: [ { icon: "🤔", txt: "Probably true — ETFs feel serious", cor: false, why: "eMAXIS Slim S&P 500 minimum = ¥100. That's literally one coin. 'For serious investors only' is the myth wearing a suit." }, { icon: "🚨", txt: "100% myth — minimum is ¥100", cor: true, why: "Correct. ¥100 buys real proportional ownership in 500 of the world's biggest companies. ETFs were designed for everyone." } ] },
+  { icon: "📊", q: "¥500/month invested for 30 years at 7%.", sub: "What does it grow to?", opts: [ { icon: "😐", txt: "About ¥180,000 — barely worth it", cor: false, why: "¥500/month × 30 years = ¥180k contributed. But with 7% compounding, the actual value = ¥566,000. Compounding triples your money." }, { icon: "💰", txt: "Over ¥560,000 — compounding wins", cor: true, why: "Correct. ¥180k contributed → ¥566k total. The extra ¥386k is free money from compounding. Small + consistent beats large + late." } ] },
+  { icon: "🧾", q: "Your portfolio shows ¥3,200 after 6 months of ¥500/month.", sub: "Is this a failure?", opts: [ { icon: "😔", txt: "Yes — this is embarrassing", cor: false, why: "¥3,200 after 6 months IS the Capital Myth talking. In 30 years that ¥3,200 seed alone is worth ¥24,000+ at 7%. The start is never the finish." }, { icon: "💪", txt: "No — the habit is the win", cor: true, why: "Correct. The myth wants you to judge the start by its size. The math judges it by its time. ¥3,200 today → compound growth for decades." } ] },
+  { icon: "🗓️", q: "Invest ¥5,000/month starting today vs. starting in 2 years.", sub: "Same total contribution. Who wins?", opts: [ { icon: "🤝", txt: "Same result — same amount", cor: false, why: "Starting today: ~¥652k after 10yr. Starting in 2yr: ~¥476k after 10yr. Two years of compounding = ¥176k difference. Time is not neutral." }, { icon: "⏩", txt: "Starting today wins — by a lot", cor: true, why: "Correct. 2 lost years = ¥176k gap at 7%/yr. The Capital Myth always costs more than it looks. Starting small now beats waiting to start big." } ] },
+  { icon: "🇯🇵", q: "NISA account in Japan. What's the minimum to open and invest?", sub: "Be honest — what did you think before this lesson?", opts: [ { icon: "💭", txt: "Thought you needed ¥50,000+", cor: false, why: "Most expats assume NISA needs big money. Reality: SBI and Rakuten allow NISA investments from ¥100. The barrier was never money — it was the myth." }, { icon: "✅", txt: "¥100 — the myth lied to me", cor: true, why: "Correct. ¥100 opens a NISA investment at major Japanese brokers. The system is built for small, consistent investing. You were always eligible." } ] },
+  { icon: "🏆", q: "¥500/month at age 25 vs ¥50,000/month starting at age 45.", sub: "Same total contributed. Who has more at 65?", opts: [ { icon: "💼", txt: "The ¥50,000 investor — bigger amounts", cor: false, why: "Wrong. The ¥500/month investor wins by a massive margin. 40 years of compounding destroys 20 years of bigger contributions. Time > amount. Always." }, { icon: "🌱", txt: "The ¥500 investor — time wins", cor: true, why: "Final boss answer. ¥500/month from 25 = ~¥1.3M at 65. ¥50,000/month from 45 = ~¥522k. Small + early + consistent = the only formula that matters." } ] }
 ];
 
 function fmt(n) {
@@ -176,10 +130,7 @@ function AnsBtn({ icon, txt, state, onClick }) {
   const bg = state === "correct" ? T.teal + "20" : state === "wrong" ? T.red + "15" : T.navyCard;
   const opacity = state === "locked" ? 0.45 : 1;
   return (
-    <div
-      onClick={state === "locked" ? undefined : onClick}
-      style={{ ...styles.ans, border: "1.5px solid " + borderColor, background: bg, opacity, pointerEvents: state === "locked" ? "none" : "auto" }}
-    >
+    <div onClick={state === "locked" ? undefined : onClick} style={{ ...styles.ans, border: "1.5px solid " + borderColor, background: bg, opacity, pointerEvents: state === "locked" ? "none" : "auto" }}>
       <div style={styles.ansIcon}>{icon}</div>
       <div style={styles.ansText}>{txt}</div>
     </div>
@@ -190,422 +141,272 @@ function Feedback({ type, text }) {
   if (!text) return null;
   const isOk = type === "ok";
   return (
-    <div style={{
-      borderRadius: "12px", padding: "12px 14px", marginBottom: "10px",
-      fontSize: "13px", lineHeight: 1.5,
-      background: isOk ? T.teal + "20" : T.red + "15",
-      border: "1px solid " + (isOk ? T.teal + "50" : T.red + "40"),
-      color: isOk ? "#5DCAA5" : "#ff8080",
-    }}>
+    <div style={{ borderRadius: "12px", padding: "12px 14px", marginBottom: "10px", fontSize: "13px", lineHeight: 1.5, background: isOk ? T.teal + "20" : T.red + "15", border: "1px solid " + (isOk ? T.teal + "50" : T.red + "40"), color: isOk ? "#5DCAA5" : "#ff8080" }}>
       {isOk ? "✓ " : "✗ "}{text}
     </div>
   );
 }
 
-// ── SCREENS ────────────────────────────────────────────────
+function QuizContent() {
+  const searchParams = useSearchParams();
+  const urlUid = searchParams.get("uid");
+  const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
 
-function ScreenIntro({ onStart }) {
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={0} />
-      <div style={styles.partLabel}>Quiz · Lesson 1-1 · The Capital Myth</div>
-      <div style={styles.sceneCard}>
-        <div style={styles.sceneIcon}>🧠</div>
-        <div style={styles.sceneQ}>Did the myth break?</div>
-        <div style={{ ...styles.sceneSub, marginTop: "4px" }}>3 rounds. Visuals first. No essays.</div>
-      </div>
-      <div style={{ background: T.navyCard, borderRadius: "14px", padding: "14px", marginBottom: "12px" }}>
-        {[
-          { icon: "🎯", title: "Part A — Instinct check", sub: "No right or wrong. Just your gut." },
-          { icon: "⏰", title: "Part B — Cost of waiting", sub: "Your real numbers. Live yen cost." },
-          { icon: "🎮", title: "Part C — Myth moments", sub: "10 scenes. Spot the myth. Keep your lives." },
-        ].map((r, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: i < 2 ? "10px" : 0 }}>
-            <div style={{ fontSize: "20px" }}>{r.icon}</div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: T.white }}>{r.title}</div>
-              <div style={{ fontSize: "12px", color: T.slate }}>{r.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={styles.notice}>
-        Myth-O-Meter tracks your decisions in Part C.<br />Hit 100% and the myth is officially dead.
-      </div>
-      <button style={styles.btn} onClick={onStart}>Start →</button>
-    </div>
-  );
-}
-
-function ScreenA({ qNum, icon, q, sub, opts, onPick, picked, onNext }) {
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={1} />
-      <div style={styles.partLabel}>Part A · Instinct Check</div>
-      <div style={styles.notice}>No right or wrong here — just tap what feels true. Your answers shape your investor type.</div>
-      <div style={{ fontSize: "11px", color: T.slate, fontWeight: 600, textAlign: "center", marginBottom: "10px" }}>
-        Question {qNum} of 3
-      </div>
-      <div style={styles.sceneCard}>
-        <div style={styles.sceneIcon}>{icon}</div>
-        <div style={styles.sceneQ}>{q}</div>
-        <div style={styles.sceneSub}>{sub}</div>
-      </div>
-      <div style={styles.ansGrid}>
-        {opts.map((o, i) => (
-          <AnsBtn key={i} icon={o.icon} txt={o.txt} state={picked === i ? "correct" : undefined} onClick={() => onPick(i)} />
-        ))}
-      </div>
-      <div style={styles.nxtWrap}>
-        {picked !== null && (
-          <button style={styles.btn} onClick={onNext}>
-            {qNum === 3 ? "See my investor type →" : "Next →"}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ScreenPersonality({ pType, onNext }) {
-  const p = PERSONALITIES[pType];
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={1} />
-      <div style={styles.partLabel}>Part A · Your Investor Type</div>
-      <div style={{ ...styles.persCard, background: p.col + "20", borderColor: p.bdr }}>
-        <div style={{ fontSize: "48px", marginBottom: "8px" }}>{p.icon}</div>
-        <div style={{ fontSize: "20px", fontWeight: 700, marginBottom: "5px", color: p.col }}>{p.name}</div>
-        <div style={{ fontSize: "13px", lineHeight: 1.6, color: T.offwhite }}>{p.desc}</div>
-      </div>
-      <div style={{ background: T.navyCard, borderRadius: "14px", padding: "14px", marginBottom: "14px" }}>
-        <div style={{ fontSize: "11px", color: T.slate, marginBottom: "8px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-          Your starting stats for Part C
-        </div>
-        <div style={styles.statGrid}>
-          <div style={styles.stat}>
-            <div style={styles.statLabel}>Savings rate</div>
-            <div style={styles.statVal}>{p.rate}</div>
-          </div>
-          <div style={styles.stat}>
-            <div style={styles.statLabel}>Starting bonus</div>
-            <div style={styles.statVal}>{p.bonus}</div>
-          </div>
-        </div>
-      </div>
-      <button style={styles.btn} onClick={onNext}>See what waiting costs you →</button>
-    </div>
-  );
-}
-
-function ScreenB({ onNext }) {
-  const [sur, setSur] = useState(5000);
-  const [wYr, setWYr] = useState(2);
-  const { cost, gain, gainWait } = calcCost(sur, wYr);
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={2} />
-      <div style={styles.partLabel}>Part B · Cost of Waiting</div>
-      <div style={{ fontSize: "21px", fontWeight: 700, color: T.white, marginBottom: "14px" }}>Your numbers.</div>
-      <div style={styles.slRow}>
-        <div style={styles.slTop}>
-          <span style={styles.slName}>Monthly amount you could invest</span>
-          <span style={styles.slVal}>{fmt(sur)}</span>
-        </div>
-        <input type="range" min="500" max="50000" step="500" value={sur} onChange={e => setSur(Number(e.target.value))} style={{ width: "100%", accentColor: T.teal }} />
-      </div>
-      <div style={styles.slRow}>
-        <div style={styles.slTop}>
-          <span style={styles.slName}>Years you're tempted to wait</span>
-          <span style={styles.slVal}>{wYr} {wYr === 1 ? "year" : "years"}</span>
-        </div>
-        <input type="range" min="1" max="10" step="1" value={wYr} onChange={e => setWYr(Number(e.target.value))} style={{ width: "100%", accentColor: T.teal }} />
-      </div>
-      <div style={styles.costClock}>
-        <div style={{ fontSize: "10px", color: T.slate, letterSpacing: "1px", textTransform: "uppercase", marginBottom: "4px" }}>Cost of waiting</div>
-        <div style={{ fontSize: "34px", fontWeight: 700, color: T.red, lineHeight: 1 }}>{fmt(cost)}</div>
-        <div style={{ fontSize: "11px", color: T.slate, marginTop: "4px" }}>in lost compounding gains at 7%/yr</div>
-      </div>
-      <div style={styles.gainBox}>
-        <div style={{ fontSize: "11px", color: T.slate, marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>If you start TODAY instead</div>
-        <div style={{ fontSize: "26px", fontWeight: 700, color: T.teal }}>{fmt(gain)}</div>
-        <div style={{ fontSize: "11px", color: T.slate, marginTop: "3px" }}>vs {fmt(gainWait)} if you wait {wYr}yr</div>
-      </div>
-      <button style={styles.btn} onClick={() => onNext(sur, wYr, cost)}>I've seen enough — let's play →</button>
-    </div>
-  );
-}
-
-function ScreenC({ onFinish }) {
-  const [idx, setIdx] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [mScore, setMScore] = useState(0);
-  const [picked, setPicked] = useState(null);
-  const [fb, setFb] = useState({ type: "", text: "" });
-  const [answered, setAnswered] = useState(0);
-
-  const ev = EVENTS[idx];
-  const pct = answered > 0 ? Math.round((mScore / answered) * 100) : 0;
-
-  function pickOpt(i) {
-    if (picked !== null) return;
-    const opt = ev.opts[i];
-    const newAnswered = answered + 1;
-    setAnswered(newAnswered);
-    setPicked(i);
-    if (!opt.cor) {
-      const newLives = lives - 1;
-      setLives(newLives);
-      setFb({ type: "bad", text: opt.why });
-      if (newLives <= 0) {
-        setTimeout(() => onFinish(mScore, newAnswered, true), 1200);
-      }
-    } else {
-      const newScore = mScore + 1;
-      setMScore(newScore);
-      setFb({ type: "ok", text: opt.why });
-    }
-  }
-
-  function next() {
-    const nextIdx = idx + 1;
-    if (nextIdx >= 10) {
-      onFinish(mScore + (picked !== null && ev.opts[picked]?.cor ? 0 : 0), answered, false);
-      return;
-    }
-    setIdx(nextIdx);
-    setPicked(null);
-    setFb({ type: "", text: "" });
-  }
-
-  function getState(i) {
-    if (picked === null) return undefined;
-    if (ev.opts[i].cor) return "correct";
-    if (i === picked) return "wrong";
-    return "locked";
-  }
-
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={3} />
-      <div style={styles.partLabel}>Part C · Myth Moments</div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <div style={{ fontSize: "11px", color: T.slate, fontWeight: 600 }}>Event {idx + 1} of 10</div>
-        <div style={{ display: "flex", gap: "6px" }}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <span key={i} style={{ fontSize: "16px" }}>{i < lives ? "❤️" : "🖤"}</span>
-          ))}
-        </div>
-      </div>
-      <MeterBar pct={pct} />
-      <div style={styles.sceneCard}>
-        <div style={styles.sceneIcon}>{ev.icon}</div>
-        <div style={styles.sceneQ}>{ev.q}</div>
-        <div style={styles.sceneSub}>{ev.sub}</div>
-      </div>
-      <div style={styles.ansGrid}>
-        {ev.opts.map((o, i) => (
-          <AnsBtn key={i} icon={o.icon} txt={o.txt} state={getState(i)} onClick={() => pickOpt(i)} />
-        ))}
-      </div>
-      <Feedback type={fb.type} text={fb.text} />
-      <div style={styles.nxtWrap}>
-        {picked !== null && lives > 0 && (
-          <button style={styles.btn} onClick={next}>
-            {idx === 9 ? "See my result →" : "Next →"}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ScreenVerdict({ mScore, aScore, pType, costVal, onReplay, onRestart }) {
-  const p = PERSONALITIES[pType];
-  const pct = Math.round((mScore / 10) * 100);
-  const total = Math.round(((mScore / 10) * 0.65 + (aScore / 6) * 0.35) * 100);
-  const aPct = Math.round((aScore / 6) * 100);
-
-  let icon, title, body, col;
-  if (total >= 80) { icon = "🏆"; title = "Myth: Destroyed."; col = T.teal; body = "You understand fractional ownership, the cost of waiting, and proportional returns. The Capital Myth has no more power over you. Lesson 1-3 is unlocked."; }
-  else if (total >= 55) { icon = "🌱"; title = "Myth: Cracking."; col = T.amber; body = "Most of it broke — a few corners held. Replay Part C to lock in the patterns before moving on to Lesson 1-3."; }
-  else { icon = "⚠️"; title = "Myth: Still breathing."; col = T.red; body = "The myth still has grip. Go back to the pizza whiteboard in Lesson 1-1. The math will finish what instinct started."; }
-
-  const barColor = (p) => p >= 70 ? T.teal : p >= 40 ? T.amber : T.red;
-
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={4} />
-      <div style={styles.partLabel}>Your Result</div>
-      <div style={{ fontSize: "38px", textAlign: "center", margin: "12px 0 6px" }}>{icon}</div>
-      <div style={{ fontSize: "21px", fontWeight: 700, textAlign: "center", marginBottom: "8px", color: col }}>{title}</div>
-      <div style={{ fontSize: "14px", color: T.offwhite, textAlign: "center", lineHeight: 1.6, marginBottom: "14px" }}>{body}</div>
-      <div style={styles.infoCard}>
-        <div style={styles.infoRow}>
-          <div style={{ ...styles.infoIconBox, background: p.col + "20" }}>
-            <span style={{ fontSize: "22px" }}>{p.icon}</span>
-          </div>
-          <div>
-            <div style={{ fontSize: "16px", fontWeight: 700, color: T.white }}>{p.name}</div>
-            <div style={{ fontSize: "12px", color: T.slate, marginTop: "2px" }}>Investor type · Part A</div>
-          </div>
-        </div>
-        <div style={{ background: T.navyDeep, borderRadius: "10px", padding: "12px", marginBottom: "10px" }}>
-          {[
-            { label: "Myth score", val: mScore + "/10 correct", pctVal: pct, color: barColor(pct) },
-            { label: "Instinct score", val: aScore + "/6", pctVal: aPct, color: T.purple },
-          ].map((row, i) => (
-            <div key={i} style={{ marginBottom: i === 0 ? "10px" : 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: T.slate, marginBottom: "5px" }}>
-                <span>{row.label}</span>
-                <span style={{ color: T.white, fontWeight: 700 }}>{row.val}</span>
-              </div>
-              <div style={styles.barWrap}>
-                <div style={{ height: "100%", borderRadius: "6px", width: row.pctVal + "%", background: row.color }} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ ...styles.infoRow, marginBottom: 0 }}>
-          <div style={{ ...styles.infoIconBox, background: T.red + "20" }}>
-            <span style={{ fontSize: "20px" }}>⏳</span>
-          </div>
-          <div>
-            <div style={{ fontSize: "16px", fontWeight: 700, color: T.red }}>{costVal}</div>
-            <div style={{ fontSize: "12px", color: T.slate, marginTop: "2px" }}>your cost of waiting (Part B)</div>
-          </div>
-        </div>
-      </div>
-      {total >= 80 ? (
-        <button style={styles.btn} onClick={() => alert("Lesson 1-3: Volatility vs Ruin — unlocked!")}>
-          Unlock Lesson 1-3 →
-        </button>
-      ) : (
-        <>
-          <button style={styles.btn} onClick={onReplay}>Replay Part C →</button>
-          <button style={styles.btnGhost} onClick={onRestart}>Start over</button>
-        </>
-      )}
-    </div>
-  );
-}
-
-function ScreenBusted({ mScore, onReplay, onRestart }) {
-  return (
-    <div style={styles.screen}>
-      <Dots total={4} current={4} />
-      <div style={styles.partLabel}>Your Result</div>
-      <div style={{ fontSize: "38px", textAlign: "center", margin: "12px 0 6px" }}>💔</div>
-      <div style={{ fontSize: "21px", fontWeight: 700, textAlign: "center", marginBottom: "8px", color: T.red }}>The myth fought back.</div>
-      <div style={{ fontSize: "14px", color: T.offwhite, textAlign: "center", lineHeight: 1.6, marginBottom: "20px" }}>
-        You ran out of lives — but opening this quiz means you're already questioning the myth. Review the explanations and replay Part C.
-      </div>
-      <div style={{ ...styles.infoCard, textAlign: "center" }}>
-        <div style={{ fontSize: "12px", color: T.slate, marginBottom: "6px" }}>Myth score</div>
-        <div style={{ fontSize: "28px", fontWeight: 700, color: T.amber }}>{mScore}/10</div>
-        <div style={{ fontSize: "12px", color: T.slate, marginTop: "4px" }}>correct before lives ran out</div>
-      </div>
-      <button style={styles.btn} onClick={onReplay}>Replay Part C →</button>
-      <button style={styles.btnGhost} onClick={onRestart}>Start over</button>
-    </div>
-  );
-}
-
-// ── MAIN ───────────────────────────────────────────────────
-
-const A_QUESTIONS = [
-  { icon: "👜", q: "You find ¥500 in an old jacket.", sub: "What do you do with it?", opts: [{ icon: "☕", txt: "Treat myself — coffee or snack" }, { icon: "🐖", txt: "Drop it in my savings jar" }, { icon: "📈", txt: "Straight into my investment account" }, { icon: "🤷", txt: "Honestly, ¥500 doesn't feel like it matters" }] },
-  { icon: "🗣️", q: '"I\'ll start investing when I save up ¥100,000."', sub: "Have you said this? Does it sound right?", opts: [{ icon: "👍", txt: "Yes — makes sense to wait" }, { icon: "😬", txt: "I've said this exact thing" }, { icon: "⏳", txt: "Waiting costs more than you think" }, { icon: "🤔", txt: "Not sure — depends on the person" }] },
-  { icon: "🍕", q: "You have ¥500. An ETF unit costs ¥100.", sub: "What goes through your mind?", opts: [{ icon: "😐", txt: "5 units feels pointless" }, { icon: "💡", txt: "I can own 5 real slices right now" }, { icon: "⏸️", txt: "I'd rather wait and invest more at once" }, { icon: "❓", txt: "I don't know what an ETF unit is" }] },
-];
-
-function scoreA(picks) {
-  const correct = [2, 2, 1];
-  const partial = [[1], [1], []];
-  let s = 0;
-  picks.forEach((p, i) => {
-    if (p === correct[i]) s += 2;
-    else if (partial[i].includes(p)) s += 1;
-  });
-  return s;
-}
-
-export default function App() {
-  const [screen, setScreen] = useState("intro");
-  const [aQ, setAQ] = useState(0);
-  const [aPicks, setAPicks] = useState([null, null, null]);
+  const [screen, setScreen]           = useState("intro");
+  const [aQ, setAQ]                   = useState(0);
+  const [aPicks, setAPicks]           = useState([null, null, null]);
   const [currentPick, setCurrentPick] = useState(null);
-  const [pType, setPType] = useState("waiter");
-  const [costVal, setCostVal] = useState("—");
-  const [cKey, setCKey] = useState(0);
-  const [finalScore, setFinalScore] = useState(0);
-  const [busted, setBusted] = useState(false);
+  const [pType, setPType]             = useState("waiter");
+  const [costVal, setCostVal]         = useState("—");
+  const [finalScore, setFinalScore]   = useState(0);
+  const [busted, setBusted]           = useState(false);
+  
+  // Part C Inner States
+  const [idx, setIdx]                 = useState(0);
+  const [lives, setLives]             = useState(3);
+  const [mScore, setMScore]           = useState(0);
+  const [picked, setPicked]           = useState(null);
+  const [fb, setFb]                   = useState({ type: "", text: "" });
+  const [answered, setAnswered]       = useState(0);
+  const [existingAttempts, setExistingAttempts] = useState(0);
 
-  function pickA(i) {
-    setCurrentPick(i);
-  }
+  useEffect(() => {
+    if (urlUid && typeof window !== "undefined") {
+      sessionStorage.setItem("knowvest_uid", urlUid);
+    }
+    if (uid) {
+      const ref = doc(db, "users", uid, "progress", "summary");
+      getDoc(ref).then(snap => {
+        if (snap.exists() && snap.data().lesson_1_1) {
+          setExistingAttempts(snap.data().lesson_1_1.attempts || 0);
+        }
+      }).catch(e => console.error(e));
+    }
+  }, [urlUid, uid]);
 
-  function nextA() {
-    const newPicks = [...aPicks];
-    newPicks[aQ] = currentPick;
-    setAPicks(newPicks);
-    setCurrentPick(null);
-    if (aQ < 2) {
-      setAQ(aQ + 1);
+  const ev = EVENTS[idx] || EVENTS[0];
+  const isLast = idx === EVENTS.length - 1;
+  const evBorderColor = ev?.isBoss ? T.red : ev?.isMarket ? T.blue : T.navyMid;
+  const pct = Math.min(100, (answered / 10) * 100);
+
+  const pickPQ = (choice) => {
+    if (pChosen) return;
+    setCurrentPick(choice);
+  };
+
+  const nextPQ = () => {
+    const nextScore = pScore + (currentPick ? currentPick.score : 0);
+    if (aQ < PERSONALITY_QS.length - 1) {
+      setAPicks(p => { const n = [...p]; n[aQ] = currentPick; return n; });
+      setAQ(i => i + 1);
+      setCurrentPick(null);
     } else {
-      const s = scoreA(newPicks);
-      setPType(s >= 5 ? "eagle" : s >= 3 ? "seedling" : "waiter");
+      setPersonality(getPersonality(nextScore));
       setScreen("personality");
     }
+  };
+
+  const pick = (choice) => {
+    if (picked !== null) return;
+    const isCorrect = choice.cor;
+    const newLives = isCorrect ? lives : lives - 1;
+    const newScore = isCorrect ? mScore + 1 : mScore;
+    setPicked(choice);
+    setMScore(newScore);
+    setAnswered(a => a + 1);
+    setFb({ type: isCorrect ? "ok" : "err", text: choice.why });
+    if (!isCorrect) setLives(newLives);
+    setHistory(h => [...h, { icon: ev.icon, title: ev.q, correct: isCorrect, label: choice.txt }]);
+    
+    if (!isCorrect && newLives <= 0) {
+      setBusted(true);
+      saveQuizOutcome(false, newScore);
+      setScreen("result");
+    }
+  };
+
+  const next = async () => {
+    if (busted || isLast) {
+      const passed = lives > 0 && mScore >= 7;
+      await saveQuizOutcome(passed, mScore);
+      setFinalScore(mScore);
+      setScreen("result");
+      return;
+    }
+    setIdx(i => i + 1);
+    setPicked(null);
+    setFb({ type: "", text: "" });
+  };
+
+  async function saveQuizOutcome(passed, finalScore) {
+    if (!uid) return;
+    try {
+      const ref = doc(db, "users", uid, "progress", "summary");
+      const nextAttempts = existingAttempts + 1;
+      const update = {
+        lesson_1_1: {
+          status: passed ? "complete" : "failed",
+          quizPassed: passed,
+          attempts: nextAttempts,
+          lastScore: `${finalScore}/10`,
+          completedAt: serverTimestamp()
+        }
+      };
+      if (passed) {
+        update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
+      } else {
+        update.lesson_1_2 = { status: "locked" };
+      }
+      await setDoc(ref, update, { merge: true });
+      setExistingAttempts(nextAttempts);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  function handleCFinish(mScore, _answered, bustedOut) {
-    setFinalScore(mScore);
-    setBusted(bustedOut);
-    setScreen("verdict");
+  function routeToDashboard() {
+    window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
   }
 
-  function replayC() {
-    setCKey(k => k + 1);
-    setScreen("partC");
+  const [pScore, setPersonalityScore] = useState(0);
+  const [personality, setPersonality] = useState(null);
+  const [history, setHistory]         = useState([]);
+
+  if (screen === "intro") {
+    return (
+      <Wrap>
+        <div style={{ padding:"40px 0 20px", textAlign:"center" }}>
+          <div style={{ fontSize:56, marginBottom:16 }}>🚀</div>
+          <h1 style={{ fontSize:24, fontWeight:900, marginBottom:8 }}>The Capital Simulator</h1>
+          <p style={{ color:T.slate, fontSize:14, lineHeight:1.6, maxWidth:320, margin:"0 auto 24px" }}>Test your wealth discipline through 10 real-world asset chapters. Prove you've beaten the myth.</p>
+          <PrimaryBtn onClick={() => setScreen("partA")}>Begin Assessment →</PrimaryBtn>
+        </div>
+      </Wrap>
+    );
   }
 
-  function restart() {
-    setScreen("intro");
-    setAQ(0);
-    setAPicks([null, null, null]);
-    setCurrentPick(null);
-    setCKey(k => k + 1);
+  if (screen === "partA") {
+    const q = PERSONALITY_QS[aQ];
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <PartLabel text="Round 1 · Saving Profile" />
+          <div style={styles.partTitle}>Instinct Check</div>
+        </div>
+        <Dots total={3} current={aQ} />
+        <Box>
+          <div style={styles.sceneCard}>
+            <div style={styles.sceneIcon}>{q.icon}</div>
+            <div style={styles.sceneQ}>{q.q}</div>
+            <div style={styles.sceneSub}>{q.sub}</div>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {q.choices.map((c, i) => (
+              <button key={i} onClick={() => { setPersonalityScore(s => s + c.score); setCurrentPick(i); }} style={{ width: "100%", background: currentPick === i ? T.teal + "20" : T.navyDeep, border: "2px solid " + (currentPick === i ? T.teal : T.navyMid), borderRadius: "12px", padding: "14px", color: T.white, fontWeight: 600, cursor: "pointer", textAlign: "left" }}>
+                <span>{c.icon} {c.label}</span>
+              </button>
+            ))}
+          </div>
+          {currentPick !== null && <Btn onClick={nextPQ}>Next →</Btn>}
+        </Box>
+      </Wrap>
+    );
   }
 
-  const aScore = scoreA(aPicks);
+  if (screen === "personality") {
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <PartLabel text="Round 1 Complete" />
+          <div style={styles.partTitle}>Investor Matrix Profile</div>
+        </div>
+        <div style={{ ...styles.persCard, background: personality?.col + "20", borderColor: personality?.bdr }}>
+          <div style={{ fontSize:52, marginBottom:8 }}>{personality?.icon}</div>
+          <div style={{ fontSize:20, fontWeight:900, color: personality?.col, marginBottom:4 }}>{personality?.name}</div>
+          <div style={{ fontSize:13, color: T.offwhite, lineHeight:1.6 }}>{personality?.desc}</div>
+        </div>
+        <PrimaryBtn onClick={() => setScreen("partB")}>Continue to Numbers →</PrimaryBtn>
+      </Wrap>
+    );
+  }
 
+  if (screen === "partB") {
+    const { cost, gain, gainWait } = calcCost(income, expenses);
+    return (
+      <Wrap>
+        <div style={{ padding:"20px 0 14px" }}>
+          <PartLabel text="Round 2 · The Clock" />
+          <div style={styles.partTitle}>The Cost of Waiting</div>
+        </div>
+        <Box>
+          <SliderField label="Monthly investment potential" value={income} onChange={setIncome} min={1000} max={100000} step={1000} display={yen(income)} color={T.teal} />
+          <SliderField label="Years delayed" value={expenses} onChange={setExpenses} min={1} max={10} step={1} display={expenses + " years"} color={T.slate} />
+          <div style={styles.costClock}>
+            <div style={styles.statLabel}>Compounding loss value</div>
+            <div style={{ fontSize:32, color: T.red, fontWeight:900 }}>{yenF(cost)}</div>
+          </div>
+          <PrimaryBtn onClick={() => setScreen("partC")}>Launch Simulation Engine →</PrimaryBtn>
+        </Box>
+      </Wrap>
+    );
+  }
+
+  if (screen === "partC") {
+    return (
+      <Wrap>
+        <div style={{ display:"flex", justifyContent:"space-between", padding:"16px 0 10px" }}>
+          <PartLabel text={`Round 3 · Event ${idx+1}/10`} />
+          <div>{Array.from({ length: 3 }).map((_, i) => <span key={i}>{i < lives ? "❤️" : "🖤"}</span>)}</div>
+        </div>
+        <div style={styles.meterWrap}>
+          <div style={{ height: "100%", background: T.teal, width: pct + "%", transition: "width 0.4s" }} />
+        </div>
+        <div style={styles.sceneCard}>
+          <div style={styles.sceneIcon}>{ev.icon}</div>
+          <div style={styles.sceneQ}>{ev.q}</div>
+          <div style={styles.sceneSub}>{ev.sub}</div>
+        </div>
+        <div style={styles.ansGrid}>
+          {ev.opts.map((o, i) => (
+            <button key={i} onClick={() => pick(i)} style={{ background: picked === o ? (o.cor ? T.teal + "20" : T.red + "20") : T.navyCard, border: "2px solid " + (picked === o ? (o.cor ? T.teal : T.red) : T.navyMid), padding:12, borderRadius:12, color:T.white, cursor:"pointer" }}>
+              <div>{o.icon}</div>
+              <div style={{ fontSize:12, marginTop:4 }}>{o.txt}</div>
+            </button>
+          ))}
+        </div>
+        <Feedback type={fb.type} text={fb.text} />
+        {picked !== null && <PrimaryBtn onClick={next}>Next →</PrimaryBtn>}
+      </Wrap>
+    );
+  }
+
+  if (screen === "result") {
+    const passed = !busted && mScore >= 7;
+    return (
+      <Wrap>
+        <div style={{ textAlign:"center", padding:"40px 0" }}>
+          <div style={{ fontSize:64 }}>{passed ? "🏆" : "💥"}</div>
+          <h1 style={{ fontSize:22, fontWeight:900, margin:"14px 0" }}>{passed ? "Myth Destroyed!" : "Colony Overwhelmed"}</h1>
+          <p style={{ color:T.slate, fontSize:14, maxWidth:300, margin:"0 auto 20px" }}>{passed ? "You've successfully unlocked Lesson 1-2 on the roadmap." : "The capital myth retained its grip. Try rewriting your choices."}</p>
+          <div style={styles.infoCard}>
+            <div style={{ fontSize:14 }}>Final Simulation Score</div>
+            <div style={{ fontSize:36, color: passed ? T.teal : T.amber, fontWeight:900 }}>{mScore} / 10</div>
+          </div>
+          <PrimaryBtn onClick={routeToDashboard}>Return to Dashboard</PrimaryBtn>
+        </div>
+      </Wrap>
+    );
+  }
+
+  return null;
+}
+
+export default function QuizApp() {
   return (
-    <div style={styles.app}>
-      {screen === "intro" && <ScreenIntro onStart={() => setScreen("partA")} />}
-      {screen === "partA" && (
-        <ScreenA
-          qNum={aQ + 1}
-          icon={A_QUESTIONS[aQ].icon}
-          q={A_QUESTIONS[aQ].q}
-          sub={A_QUESTIONS[aQ].sub}
-          opts={A_QUESTIONS[aQ].opts}
-          picked={currentPick}
-          onPick={pickA}
-          onNext={nextA}
-        />
-      )}
-      {screen === "personality" && <ScreenPersonality pType={pType} onNext={() => setScreen("partB")} />}
-      {screen === "partB" && (
-        <ScreenB onNext={(sur, wYr, cost) => { setCostVal(fmt(cost)); setScreen("partC"); }} />
-      )}
-      {screen === "partC" && <ScreenC key={cKey} onFinish={handleCFinish} />}
-      {screen === "verdict" && !busted && (
-        <ScreenVerdict mScore={finalScore} aScore={aScore} pType={pType} costVal={costVal} onReplay={replayC} onRestart={restart} />
-      )}
-      {screen === "verdict" && busted && (
-        <ScreenBusted mScore={finalScore} onReplay={replayC} onRestart={restart} />
-      )}
-    </div>
+    <Suspense fallback={<div style={{ background: T.navy, minHeight: "100vh" }} />}>
+      <QuizContent />
+    </Suspense>
   );
 }
+
+const A_QUESTIONS = []; // kept for references
