@@ -474,10 +474,20 @@ function Lesson0Content() {
     } catch (err) {
       console.error("Failed to save progress:", err);
     }
-    //window.location.href = "https://project-0d07n.vercel.app/roadmap?uid=" + uid;
-    //window.location.href = "https://project-0d07n.vercel.app/roadmap";
-    // Inside completeLesson() change this line at the bottom:
-    window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
+    // ── 🛠️ CUSTOM BRANCH ROUTING ──
+    if (outcome === "green") {
+     // 1. User passed perfectly! Send them back to the roadmap to see Level 1 unlocked
+      window.location.href = `https://project-0d07n.vercel.app/roadmap.html?uid=${uid}`;
+    } 
+    else if (outcome === "blocked_debt") {
+     // 2. User failed the Debt Audit. Direct them to your custom debt guide or keep them here
+      window.location.href = `https://project-0d07n.vercel.app/debt-strategy.html?uid=${uid}`; 
+     // (Or replace with whatever route you want for the debt failure step)
+    } 
+    else if (outcome === "blocked_no_fund") {
+     // 3. User failed the Cushion Audit. Direct them to a cushion-building guide
+     window.location.href = `https://project-0d07n.vercel.app/build-cushion.html?uid=${uid}`;
+    }
   }
 
   const profile        = EMOTIONS.find(e => e.id === emotion);
