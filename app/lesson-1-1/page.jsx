@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react"; // 👈 Added Suspense
-import { useSearchParams } from "next/navigation"; // 👈 Added navigation tools
-import { initializeApp, getApps } from "firebase/app"; // 👈 Added Firebase hooks
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 
-// ── FIREBASE STORAGE CONFIG ──
 const firebaseConfig = {
   apiKey: "AIzaSyDFVDqRSY3AFRw00aF7uiAo1yXJGHNhA5U",
   authDomain: "japanaviwealth.firebaseapp.com",
@@ -143,9 +142,8 @@ function WBPanel({ title, color, children }) {
   );
 }
 
-function Lesson12Content() {
+function Lesson11Content() { // 👈 Renamed to 1-1
   const searchParams = useSearchParams();
-  // ── USER AUTHENTICATION STRATEGY ──
   const urlUid = searchParams.get("uid");
   const uid = urlUid || (typeof window !== "undefined" ? sessionStorage.getItem("knowvest_uid") : null);
 
@@ -170,20 +168,19 @@ function Lesson12Content() {
 
   useEffect(() => { topRef.current?.scrollIntoView({ behavior:"smooth" }); }, [part]);
 
-  // ── TRIGGER ROUTE TO QUIZ SCREEN ──
   async function triggerQuizNavigation() {
     if (!uid) return;
     try {
       const ref = doc(db, "users", uid, "progress", "summary");
       await setDoc(ref, {
-        lesson_1_2: {
+        lesson_1_1: { // 👈 Changed key to 1_1
           status: "inprogress"
         }
       }, { merge: true });
     } catch (e) {
       console.error(e);
     }
-    window.location.href = `https://project-0d07n.vercel.app/lesson-1-2-quiz.html?uid=${uid}`;
+    window.location.href = `https://project-0d07n.vercel.app/lesson-1-1-quiz.html?uid=${uid}`; // 👈 Changed route to 1-1
   }
 
   const LABELS = ["The Fear","The Analogy","The Rule","Your Numbers","Your Verdict"];
@@ -193,7 +190,7 @@ function Lesson12Content() {
       <div style={{ width:"100%", maxWidth:480 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 0 14px" }}>
           <div>
-            <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>Level 1 · Lesson 1-2</div>
+            <div style={{ fontSize:10, letterSpacing:2, color:T.slate, textTransform:"uppercase", marginBottom:3 }}>Level 1 · Lesson 1-1</div>
             <div style={{ fontSize:17, fontWeight:800 }}>{LABELS[part]}</div>
           </div>
           <div style={{ display:"flex", gap:5 }}>
@@ -448,14 +445,14 @@ function Lesson12Content() {
   );
 }
 
-export default function Lesson12() {
+export default function Lesson11Page() { // 👈 Renamed Page wrapper
   return (
     <Suspense fallback={
       <div style={{ background: T.navy, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ color: T.slate, fontSize: 14 }}>Initializing Lesson 1-2...</div>
+        <div style={{ color: T.slate, fontSize: 14 }}>Initializing Lesson 1-1...</div>
       </div>
     }>
-      <Lesson12Content />
+      <Lesson11Content />
     </Suspense>
   );
 }
