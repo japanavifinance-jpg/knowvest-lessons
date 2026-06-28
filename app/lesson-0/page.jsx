@@ -784,7 +784,6 @@ function Lesson0Content() {
                   }}>
                     Adjust Debt Sliders
                   </Btn>
-                  // <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_debt")}> Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
@@ -820,7 +819,6 @@ function Lesson0Content() {
                   }}>
                     Adjust Cushion Shield
                   </Btn>
-                   // <Btn color={T.navyCard} style={{ flex:1, border:`1px solid ${T.slate}33` }} onClick={() => completeLesson("blocked_no_fund")}>Unlock Level 1 →</Btn>
                 </div>
               </Card>
             )}
