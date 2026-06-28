@@ -272,10 +272,10 @@ function Lesson12Content() {
         const ref = doc(db, "users", uid, "progress", "summary");
         await setDoc(ref, { lesson_1_2: { status: "inprogress" } }, { merge: true });
       } catch (e) {
-        console.error(e);
+        console.error("Roadmap status save failed:", e);
       }
     }
-    window.location.href = `https://project-0d07n.vercel.app/lesson-1-1-quiz.html?uid=${uid}`;
+    window.location.href = `https://project-0d07n.vercel.app/lesson-1-2-quiz.html?uid=${uid}`;
   }
 
   return (
