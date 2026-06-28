@@ -164,7 +164,9 @@ function QuizContent() {
 
   const next = async () => {
     if (gameOver || isLast) { 
-      const passed = lives > 0 && score >= 7;
+      // ── 🔥 SECURE CHECK: They must have LIVES left AND score >= 7 ──
+      const passed = !gameOver && lives > 0 && score >= 7;
+      
       await saveQuizOutcome(passed, score);
       setScreen("result"); 
       return; 
@@ -180,6 +182,7 @@ function QuizContent() {
     try {
       const ref = doc(db, "users", uid, "progress", "summary");
       const nextAttempts = existingAttempts + 1;
+      
       const update = {
         lesson_1_1: {
           status: passed ? "complete" : "failed",
@@ -189,13 +192,19 @@ function QuizContent() {
           completedAt: serverTimestamp()
         }
       };
+
       if (passed) {
+        // Only unlock 1-2 if they actually passed!
         update.lesson_1_2 = { status: "active", quizPassed: false, attempts: 0 };
+      } else {
+        // 🔒 FORCE LOCK: If they failed, explicitly make sure 1-2 is locked or un-activated
+        update.lesson_1_2 = { status: "locked", quizPassed: false, attempts: 0 };
       }
+
       await setDoc(ref, update, { merge: true });
       setExistingAttempts(nextAttempts);
     } catch (e) {
-      console.error(e);
+      console.error("Database sync failure:", e);
     }
   }
 
